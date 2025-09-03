@@ -6,5 +6,5 @@ public enum CategorieMedicament {
     ANTIVIRAUX,
     ANTIHISTAMINIQUES,
     ANTISPASMODIQUES,
-    AUTRES
+    ANTIBIOTIQUES, AUTRES
 }

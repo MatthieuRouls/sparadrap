@@ -1,4 +1,4 @@
-package test;
+package test.model;
 
 import main.model.Medicament.CategorieMedicament;
 import main.model.Medicament.Medicament;

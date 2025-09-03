@@ -1,4 +1,4 @@
-package test;
+package test.model;
 
 import main.model.Personne.CategoriePersonne.Client;
 import main.model.Personne.CategoriePersonne.Medecin;

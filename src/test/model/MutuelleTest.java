@@ -1,4 +1,4 @@
-package test;
+package test.model;
 
 import main.model.Organisme.TypeOrganisme.Mutuelle;
 import org.junit.jupiter.api.BeforeEach;
