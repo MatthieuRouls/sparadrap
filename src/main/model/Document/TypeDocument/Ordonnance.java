@@ -2,24 +2,37 @@ package main.model.Document.TypeDocument;
 
 import main.model.Document.Document;
 import main.model.Medicament.Medicament;
+import main.model.Personne.CategoriePersonne.Client;
+import main.model.Personne.CategoriePersonne.Medecin;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public class Ordonnance extends Document {
-
     private List<Medicament> medicaments;
     private Map<Medicament, Integer> quantites;
     private String reference;
     private double montantTotal;
+    private Client patient;
+    private Medecin medecin;
 
-    public Ordonnance(Date dateCreation, String nomMedecin, String nomPatient, List<Medicament> medicaments, Map<Medicament, Integer> quantites, String reference) {
-        super(dateCreation, nomMedecin, nomPatient);
+    public Ordonnance(Date dateCreation, Medecin medecin, Client patient,
+                      List<Medicament> medicaments, Map<Medicament, Integer> quantites, String reference) {
+        super(dateCreation, medecin.getNom(), patient.getNom());
+        this.medecin = medecin;
+        this.patient = patient;
         this.medicaments = medicaments;
         this.quantites = quantites;
         this.reference = reference;
         this.montantTotal = calculerMontantTotal();
+    }
+
+    public Client getPatient() {
+        return patient;
+    }
+    public Medecin getMedecin() {
+        return medecin;
     }
 
     public List<Medicament> getMedicaments() {
@@ -65,6 +78,15 @@ public class Ordonnance extends Document {
             total += entry.getKey().getPrix() * entry.getValue();
         }
         return total;
+    }
+
+    public String getNomMedecin() {
+        return medecin.getNom() + " " + medecin.getPrenom();
+    }
+
+    public String getNomPatient() {
+        return patient.getNom() + " " + patient.getPrenom();
+
     }
     @Override
     public void genererDocument() {

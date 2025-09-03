@@ -69,7 +69,7 @@ public class GestPharmacieServiceTest {
         );
 
         ordonnance = new Ordonnance(
-                new Date(), "Dr. Dupont", "Pierre Martin", medicaments, quantites, "ORD001"
+                new Date(), medecin, client, medicaments, quantites, "ORD001"
         );
     }
 

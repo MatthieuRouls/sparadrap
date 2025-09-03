@@ -3,6 +3,8 @@ package test.model;
 import main.model.Document.TypeDocument.Ordonnance;
 import main.model.Medicament.CategorieMedicament;
 import main.model.Medicament.Medicament;
+import main.model.Personne.CategoriePersonne.Client;
+import main.model.Personne.CategoriePersonne.Medecin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,12 +15,29 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OrdonnanceTest {
     private Ordonnance ordonnance;
     private Date dateCreation;
+    private Medecin medecin;
+    private Client patient;
     private Medicament medicament1;
     private Medicament medicament2;
+    private List<Medicament> medicaments;
+    private Map<Medicament, Integer> quantites;
 
     @BeforeEach
     public void setUp() {
         dateCreation = new Date();
+
+        medecin = new Medecin(
+                "Dr. Dupont", "Jean", "10 Rue des Docteurs", "75000", "Paris",
+                "0123456789", "jean.dupont@example.com", "MED001",
+                "AGR123456789"
+        );
+
+        patient = new Client(
+                "Martin", "Pierre", "12 Rue de Paris", "75000", "Paris",
+                "0123456789", "pierre.martin@example.com", "CL001",
+                "123456789012345", null, medecin
+        );
+
         medicament1 = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, new Date(), new Date());
         medicament2 = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES, 10.99, 50, new Date(), new Date());
 
@@ -30,13 +49,13 @@ public class OrdonnanceTest {
         quantites.put(medicament1, 2);
         quantites.put(medicament2, 1);
 
-        ordonnance = new Ordonnance(dateCreation, "Dr. Dupont", "Pierre Martin", medicaments, quantites, "ORD001");
+        ordonnance = new Ordonnance(dateCreation, medecin, patient, medicaments, quantites, "ORD001");
     }
 
     @Test
     public void testConstructeurEtGetters() {
-        assertEquals("Dr. Dupont", ordonnance.getNomMedecin());
-        assertEquals("Pierre Martin", ordonnance.getNomPatient());
+        assertEquals("Dr. Dupont Jean", ordonnance.getNomMedecin());
+        assertEquals("Martin Pierre", ordonnance.getNomPatient());
         assertEquals(2, ordonnance.getMedicaments().size());
         assertEquals(2, ordonnance.getQuantites().size());
         assertEquals("ORD001", ordonnance.getReference());

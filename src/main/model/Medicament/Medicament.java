@@ -74,9 +74,13 @@ public class Medicament {
         if (quantite <= 0) {
             throw new IllegalArgumentException("La quantite doit etre positive.");
         }
+        quantiteStock += quantite;
     }
 
     public boolean isDisponible(int quantite) {
+        if (quantite <= 0) {
+            throw new IllegalArgumentException("La quantite doit etre positive.");
+        }
         return quantiteStock >= quantite;
     }
 

@@ -112,7 +112,7 @@ public class GestPharmacieService {
     public List<Achat> getAchatsParPeriode(Date debut, Date fin) {
         List<Achat> achatsParPeriode = new ArrayList<>();
         for (Achat achat : achats) {
-            if (achat.getDateTransaction().after(debut) && achat.getDateTransaction().before(fin)) {
+            if (!achat.getDateTransaction().before(debut) && !achat.getDateTransaction().after(fin)) {
                 achatsParPeriode.add(achat);
             }
         }
@@ -144,7 +144,7 @@ public class GestPharmacieService {
     public List<Ordonnance> getOrdonnancesParClient(Client client) {
         List<Ordonnance> ordonnancesParClient = new ArrayList<>();
         for (Ordonnance ordonnance : ordonnances) {
-            if (ordonnance.getNomPatient().equals(client.getNom())) {
+            if (ordonnance.getNomPatient().equals(client.getPrenom() + " " + client.getNom())) {
                 ordonnancesParClient.add(ordonnance);
             }
         }
