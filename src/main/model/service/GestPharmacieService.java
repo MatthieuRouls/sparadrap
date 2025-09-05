@@ -8,115 +8,142 @@ import main.model.Personne.CategoriePersonne.Medecin;
 import main.model.Transaction.TypeTransaction.Achat;
 import org.junit.jupiter.api.Order;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class GestPharmacieService {
 
-    private List<Client> clients;
-    private List<Medecin> medecins;
-    private List<Mutuelle> mutuelles;
-    private List<Achat> achats;
-    private List<Ordonnance> ordonnances;
-
-    public GestPharmacieService() {
-        this.clients = new ArrayList<>();
-        this.medecins = new ArrayList<>();
-        this.mutuelles = new ArrayList<>();
-        this.achats = new ArrayList<>();
-        this.ordonnances = new ArrayList<>();
-    }
+    private final Map<String, Client> clients = new ConcurrentHashMap<>();
+    private final Map<String, Medecin> medecins = new ConcurrentHashMap<>();
+    private final Map<String, Mutuelle> mutuelles = new ConcurrentHashMap<>();
+    private final List<Achat> achats = new CopyOnWriteArrayList<>();
+    private final List<Ordonnance> ordonnances = new CopyOnWriteArrayList<>();
 
 
     public void ajouterClient(Client client) {
-        clients.add(client);
+        if (client == null) {
+            throw new IllegalArgumentException("Le client ne peut pas etre null");
+        }
+        if (clients.containsKey(client.getIdentifiant())) {
+            throw new IllegalArgumentException("Un client avec cet identifiant existe deja");
+        }
+        clients.put(client.getIdentifiant(), client);
     }
 
     public void modifierClient(Client client) {
-        for (int i = 0; i < clients.size(); i++) {
-            if (clients.get(i).getIdentifiant().equals(client.getIdentifiant())) {
-                clients.set(i, client);
-                break;
-            }
+        if (client == null) {
+            throw new IllegalArgumentException("Le client ne peut pas etre null");
         }
+        if (!clients.containsKey(client.getIdentifiant())) {
+            throw new IllegalArgumentException("Aucun client trouve avec cet identifiant");
+        }
+        clients.put(client.getIdentifiant(), client);
     }
 
-    public void supprimerClient(String identifiant) {
-        clients.removeIf(client -> client.getIdentifiant().equals(identifiant));
+    public boolean supprimerClient(String identifiant) {
+        if (identifiant == null || identifiant.trim().isEmpty()) {
+        throw new IllegalArgumentException("L'identifiant ne peut pas etre null ou vide");
+        }
+        return clients.remove(identifiant) != null;
     }
 
-    public Client rechercherClient(String identifiant) {
-        for (Client client : clients) {
-            if (client.getIdentifiant().equals(identifiant)) {
-                return client;
+    public Optional<Client> rechercherClient(String identifiant) {
+        if (identifiant == null || identifiant.trim().isEmpty()) {
+            return Optional.empty();
             }
+            return Optional.ofNullable(clients.get(identifiant.trim()));
         }
-        return null;
-    }
+
 
     public void ajouterMedecin(Medecin medecin) {
-        medecins.add(medecin);
+        if (medecin == null) {
+            throw new IllegalArgumentException("Le medecin ne peut pas etre null");
+        }
+        if (medecins.containsKey(medecin.getIdentifiant())) {
+            throw new IllegalArgumentException("Un medecin avec cet identifiant existe deja");
+        }
+        medecins.put(medecin.getIdentifiant(), medecin);
     }
 
     public void modifierMedecin(Medecin medecin) {
-        for (int i = 0; i < medecins.size(); i++) {
-            if (medecins.get(i).getIdentifiant().equals(medecin.getIdentifiant())) {
-                medecins.set(i, medecin);
-                break;
-            }
+        if (medecin == null) {
+            throw new IllegalArgumentException("Le medecin ne peut pas etre null");
         }
-    }
-    public void supprimerMedecin(String identifiant) {
-        medecins.removeIf(medecin -> medecin.getIdentifiant().equals(identifiant));
+        if (!medecins.containsKey(medecin.getIdentifiant())) {
+            throw new IllegalArgumentException("Aucun medecin trouve avec cet identifiant");
+        }
+        medecins.put(medecin.getIdentifiant(), medecin);
     }
 
-    public Medecin rechercherMedecin(String identifiant) {
-        for (Medecin medecin : medecins) {
-            if (medecin.getIdentifiant().equals(identifiant)) {
-                return medecin;
-            }
+    public boolean supprimerMedecin(String identifiant) {
+        if (identifiant == null || identifiant.trim().isEmpty()) {
+            throw new IllegalArgumentException("L'identifiant ne peut pas etre null");
         }
-        return null;
+        return medecins.remove(identifiant) != null;
+    }
+
+    public Optional<Medecin> rechercherMedecin(String identifiant) {
+        if (identifiant == null || identifiant.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(medecins.get(identifiant.trim()));
     }
 
     public void ajouterMutuelle(Mutuelle mutuelle) {
-        mutuelles.add(mutuelle);
+        if (mutuelle == null) {
+            throw new IllegalArgumentException("Le mutuelle ne peut pas etre null");
+        }
+        if (mutuelles.containsKey(mutuelle.getNom())) {
+            throw new IllegalArgumentException("Cette mutuelle existe deja");
+        }
+        mutuelles.put(mutuelle.getNom(), mutuelle);
     }
 
     public void modifierMutuelle(Mutuelle mutuelle) {
-        for (int i = 0; i < mutuelles.size(); i++) {
-            if (mutuelles.get(i).getNom().equals(mutuelle.getNom())) {
-                mutuelles.set(i, mutuelle);
-                break;
-            }
+        if (mutuelle == null) {
+            throw new IllegalArgumentException("La mutuelle ne peut pas etre null");
         }
-    }
-    public void supprimerMutuelle(String nom) {
-        mutuelles.removeIf(mutuelle -> mutuelle.getNom().equals(nom));
+        if (!medecins.containsKey(mutuelle.getNom())) {
+            throw new IllegalArgumentException("Aucune mutuelle trouvee avec ce nom");
+        }
+        mutuelles.put(mutuelle.getNom(), mutuelle);
     }
 
-    public Mutuelle rechercherMutuelle(String nom) {
-        for (Mutuelle mutuelle : mutuelles) {
-            if (mutuelle.getNom().equals(nom)) {
-                return mutuelle;
-            }
+    public boolean supprimerMutuelle(String nom) {
+        if (nom == null || nom.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le nom ne peut pas etre null");
         }
-        return null;
+        return mutuelles.remove(nom) != null;
+    }
+
+    public Optional<Mutuelle> rechercherMutuelle(String nom) {
+        if (nom == null || nom.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(mutuelles.get(nom.trim()));
     }
 
     public void enregistrerAchat(Achat achat) {
+        if (achat == null) {
+            throw new IllegalArgumentException("L'achat ne peut pas etre null");
+        }
         achats.add(achat);
     }
 
     public List<Achat> getAchatsParPeriode(Date debut, Date fin) {
-        List<Achat> achatsParPeriode = new ArrayList<>();
-        for (Achat achat : achats) {
-            if (!achat.getDateTransaction().before(debut) && !achat.getDateTransaction().after(fin)) {
-                achatsParPeriode.add(achat);
-            }
+        if (debut == null || fin == null) {
+            throw new IllegalArgumentException("Les dates ne peuvent pas être null");
         }
-        return achatsParPeriode;
+        if (debut.after(fin)) {
+            throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
+        }
+
+        return achats.stream()
+                .filter(achat -> !achat.getDateTransaction().before(debut) &&
+                        !achat.getDateTransaction().after(fin))
+                .collect(Collectors.toList());
     }
 
     public List<Achat> getAchatsParClient(Client client) {
@@ -162,10 +189,6 @@ public class GestPharmacieService {
     }
 
     public double calculerChiffreAffaires(Date debut, Date fin) {
-        double chiffreAffaires = 0.0;
-        for (Achat achat : getAchatsParPeriode(debut, fin)) {
-            chiffreAffaires += achat.getMontantTotal();
-        }
-        return chiffreAffaires;
+        return getAchatsParPeriode(debut, fin).stream().mapToDouble(Achat::getMontantTotal).sum();
     }
 }
