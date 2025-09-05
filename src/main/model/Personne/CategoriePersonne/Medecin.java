@@ -3,6 +3,8 @@ package main.model.Personne.CategoriePersonne;
 import main.model.Personne.Personne;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Medecin extends Personne {
@@ -22,7 +24,7 @@ public class Medecin extends Personne {
     }
 
     public List<Client> getPatients() {
-        return patients;
+        return Collections.unmodifiableList(new ArrayList<>(patients));
     }
 
     public void setNumeroRPPS(String numeroRPPS) {

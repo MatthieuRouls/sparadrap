@@ -2,6 +2,7 @@ package main.model.Personne.CategoriePersonne;
 
 import main.model.Organisme.TypeOrganisme.Mutuelle;
 import main.model.Personne.Personne;
+import main.model.security.SecurityValidator;
 
 public class Client extends Personne {
     private String numeroSecuriteSocial;
@@ -16,7 +17,7 @@ public class Client extends Personne {
     }
 
     public String getNumeroSecuriteSocial() {
-        return numeroSecuriteSocial;
+        return SecurityValidator.maskSecuriteSociale(numeroSecuriteSocial);
     }
 
     public Mutuelle getMutuelle() {

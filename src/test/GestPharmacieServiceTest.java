@@ -76,7 +76,7 @@ public class GestPharmacieServiceTest {
     @Test
     public void testAjouterClient() {
         service.ajouterClient(client);
-        assertNotNull(service.rechercherClient("CL001"));
+        assertTrue(service.rechercherClient("CL001").isPresent());
     }
 
     @Test
@@ -88,7 +88,9 @@ public class GestPharmacieServiceTest {
                 "123456789012345", null, null
         );
         service.modifierClient(newClient);
-        assertEquals("15 Rue de Paris", service.rechercherClient("CL001").getAdresse());
+        Optional<Client> clientOptional = service.rechercherClient("CL001");
+        assertTrue(clientOptional.isPresent());
+        assertEquals("15 rue de Paris", clientOptional.get().getAdresse());
     }
 
     @Test
@@ -101,13 +103,13 @@ public class GestPharmacieServiceTest {
     @Test
     public void testAjouterMedecin() {
         service.ajouterMedecin(medecin);
-        assertNotNull(service.rechercherMedecin("MED001"));
+        assertTrue(service.rechercherMedecin("MED001").isPresent());
     }
 
     @Test
     public void testAjouterMutuelle() {
         service.ajouterMutuelle(mutuelle);
-        assertNotNull(service.rechercherMutuelle("Mutuelle Générale"));
+        assertTrue(service.rechercherMutuelle("Mutuelle Générale").isPresent());
     }
 
     @Test

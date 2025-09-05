@@ -42,7 +42,7 @@ public class Medicament {
         return dateMiseEnService;
     }
     public Date getDatePeremption() {
-        return datePeremption;
+        return new Date(datePeremption.getTime());
     }
     public void setNom(String nom) {
         this.nom = nom;
