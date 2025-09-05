@@ -6,6 +6,7 @@ import main.model.Organisme.TypeOrganisme.Mutuelle;
 import main.model.Personne.CategoriePersonne.Client;
 import main.model.Personne.CategoriePersonne.Medecin;
 import main.model.Transaction.TypeTransaction.Achat;
+import main.model.security.SecurityValidator;
 import org.junit.jupiter.api.Order;
 
 import java.util.*;
@@ -23,11 +24,9 @@ public class GestPharmacieService {
 
 
     public void ajouterClient(Client client) {
-        if (client == null) {
-            throw new IllegalArgumentException("Le client ne peut pas etre null");
-        }
+        SecurityValidator.validateNotNull(client, "Client");
         if (clients.containsKey(client.getIdentifiant())) {
-            throw new IllegalArgumentException("Un client avec cet identifiant existe deja");
+            throw new IllegalArgumentException("Un client avec cet identifiant existe déjà");
         }
         clients.put(client.getIdentifiant(), client);
     }
@@ -43,18 +42,17 @@ public class GestPharmacieService {
     }
 
     public boolean supprimerClient(String identifiant) {
-        if (identifiant == null || identifiant.trim().isEmpty()) {
-        throw new IllegalArgumentException("L'identifiant ne peut pas etre null ou vide");
-        }
-        return clients.remove(identifiant) != null;
+        String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
+        return clients.remove(validIdentifiant) != null;
     }
 
     public Optional<Client> rechercherClient(String identifiant) {
         if (identifiant == null || identifiant.trim().isEmpty()) {
             return Optional.empty();
-            }
-            return Optional.ofNullable(clients.get(identifiant.trim()));
         }
+        String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
+        return Optional.ofNullable(clients.get(validIdentifiant));
+    }
 
 
     public void ajouterMedecin(Medecin medecin) {
@@ -169,9 +167,10 @@ public class GestPharmacieService {
     }
 
     public List<Ordonnance> getOrdonnancesParClient(Client client) {
+        SecurityValidator.validateNotNull(client, "Client");
         List<Ordonnance> ordonnancesParClient = new ArrayList<>();
         for (Ordonnance ordonnance : ordonnances) {
-            if (ordonnance.getNomPatient().equals(client.getPrenom() + " " + client.getNom())) {
+            if (ordonnance.getPatient().equals(client)) {
                 ordonnancesParClient.add(ordonnance);
             }
         }

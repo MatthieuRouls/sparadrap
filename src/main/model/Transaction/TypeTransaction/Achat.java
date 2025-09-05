@@ -5,6 +5,7 @@ import main.model.Medicament.TypeAchat;
 import main.model.Personne.CategoriePersonne.Client;
 import main.model.Personne.CategoriePersonne.Pharmacien;
 import main.model.Transaction.Transaction;
+import main.model.security.SecurityValidator;
 
 import java.util.Date;
 import java.util.List;
@@ -64,6 +65,9 @@ public class Achat extends Transaction {
     }
 
     public void ajouterMedicament(Medicament medicament, int quantite) {
+        SecurityValidator.validateNotNull(medicament, "Médicament");
+        SecurityValidator.validateQuantite(quantite);
+        SecurityValidator.validateMedicamentNotExpired(medicament.getDatePeremption(), medicament.getNom());
         medicaments.add(medicament);
         quantites.put(medicament, quantite);
         calculerMontantTotal();
@@ -85,6 +89,7 @@ public class Achat extends Transaction {
             total += entry.getKey().getPrix() * entry.getValue();
         }
         setMontantTotal(total);
+        SecurityValidator.validateTransaction(getMontantTotal(), getMontantRembourse());
     }
 
     private void calculerMontantRembourse() {

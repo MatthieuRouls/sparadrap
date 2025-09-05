@@ -90,14 +90,14 @@ public class GestPharmacieServiceTest {
         service.modifierClient(newClient);
         Optional<Client> clientOptional = service.rechercherClient("CL001");
         assertTrue(clientOptional.isPresent());
-        assertEquals("15 rue de Paris", clientOptional.get().getAdresse());
+        assertEquals("15 Rue de Paris", clientOptional.get().getAdresse());
     }
 
     @Test
     public void testSupprimerClient() {
         service.ajouterClient(client);
-        service.supprimerClient("CL001");
-        assertNull(service.rechercherClient("CL001"));
+        assertTrue(service.supprimerClient("CL001"));
+        assertFalse(service.rechercherClient("CL001").isPresent());
     }
 
     @Test

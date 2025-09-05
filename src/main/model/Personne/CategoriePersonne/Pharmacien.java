@@ -3,6 +3,7 @@ package main.model.Personne.CategoriePersonne;
 import main.model.Document.TypeDocument.Ordonnance;
 import main.model.Personne.Personne;
 import main.model.Transaction.TypeTransaction.Achat;
+import main.model.security.SecurityValidator;
 
 import java.util.Date;
 
@@ -13,9 +14,9 @@ public class Pharmacien extends Personne {
 
     public Pharmacien(String nom, String prenom, String adresse, String codePostal, String ville, String numTelephone, String email, String identifiant, String numeroRPPS, String specialite, Date dateEmbauche) {
         super(nom, prenom, adresse, codePostal, ville, numTelephone, email, identifiant);
-        this.numeroRPPS = numeroRPPS;
-        this.specialite = specialite;
-        this.dateEmbauche = dateEmbauche;
+        this.numeroRPPS = SecurityValidator.validateNumeroRPPS(numeroRPPS);
+        this.specialite = SecurityValidator.validateAndTrimString(specialite, "Specialite");
+        this.dateEmbauche = SecurityValidator.validateDate(dateEmbauche, "Date d'embauche");
     }
 
     public String getNumeroRPPS() {

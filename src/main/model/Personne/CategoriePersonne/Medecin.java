@@ -1,6 +1,7 @@
 package main.model.Personne.CategoriePersonne;
 
 import main.model.Personne.Personne;
+import main.model.security.SecurityValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +16,7 @@ public class Medecin extends Personne {
                    String ville, String numTelephone, String email, String identifiant,
                    String numeroRPPS) {
         super(nom, prenom, adresse, codePostal, ville, numTelephone, email, identifiant);
-        this.numeroRPPS = numeroRPPS;
+        this.numeroRPPS = SecurityValidator.validateNumeroRPPS(numeroRPPS);
         patients = new ArrayList<>();
     }
 

@@ -1,4 +1,6 @@
 package main.model.Personne;
+import main.model.security.SecurityValidator;
+
 import java.util.Objects;
 
 /**
@@ -19,14 +21,14 @@ public abstract class Personne {
 
     public Personne(String nom, String prenom, String adresse, String codePostal,
                     String ville, String numTelephone, String email, String identifiant) {
-        this.nom = nom;
-        this.prenom = prenom;
-        this.adresse = adresse;
-        this.codePostal = codePostal;
-        this.ville = ville;
-        this.numTelephone = numTelephone;
-        this.email = email;
-        this.identifiant = identifiant;
+        this.nom = SecurityValidator.validatePersonName(nom, "Nom");
+        this.prenom = SecurityValidator.validatePersonName(prenom, "Prenom");
+        this.adresse = SecurityValidator.validateAndTrimString(adresse, "Adresse");
+        this.codePostal = SecurityValidator.validatePostalCode(codePostal);
+        this.ville = SecurityValidator.validateCity(ville);
+        this.numTelephone = SecurityValidator.validatePhoneNumber(numTelephone);
+        this.email = SecurityValidator.validateEmail(email);
+        this.identifiant = SecurityValidator.validateIdentifiant(identifiant);
     }
 
 
@@ -64,35 +66,35 @@ public abstract class Personne {
 
     // Setters
     public void setNom(String nom) {
-        this.nom = nom;
+        this.nom = SecurityValidator.validatePersonName(nom, "Nom");
     }
 
     public void setPrenom(String prenom) {
-        this.prenom = prenom;
+        this.prenom = SecurityValidator.validatePersonName(prenom, "Prénom");
     }
 
     public void setAdresse(String adresse) {
-        this.adresse = adresse;
+        this.adresse = SecurityValidator.validateAndTrimString(adresse, "Adresse");
     }
 
     public void setCodePostal(String codePostal) {
-        this.codePostal = codePostal;
+        this.codePostal = SecurityValidator.validatePostalCode(codePostal);
     }
 
     public void setVille(String ville) {
-        this.ville = ville;
+        this.ville = SecurityValidator.validateCity(ville);
     }
 
     public void setNumTelephone(String numTelephone) {
-        this.numTelephone = numTelephone;
+        this.numTelephone = SecurityValidator.validatePhoneNumber(numTelephone);
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = SecurityValidator.validateEmail(email);;
     }
 
     public void setIdentifiant(String identifiant) {
-        this.identifiant = identifiant;
+        this.identifiant = SecurityValidator.validateIdentifiant(identifiant);
     }
 
     // Méthode pour afficher les informations de la personne

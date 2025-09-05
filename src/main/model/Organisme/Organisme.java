@@ -1,5 +1,7 @@
 package main.model.Organisme;
 
+import main.model.security.SecurityValidator;
+
 public abstract class Organisme {
 
     private String nom;
@@ -8,10 +10,10 @@ public abstract class Organisme {
     private String telephone;
 
     public Organisme(String nom, String codePostal, String ville, String telephone) {
-        this.nom = nom;
-        this.codePostal = codePostal;
-        this.ville = ville;
-        this.telephone = telephone;
+        this.nom = SecurityValidator.validateAndTrimString(nom, "Nom de l'organisme");
+        this.codePostal = SecurityValidator.validatePostalCode(codePostal);
+        this.ville = SecurityValidator.validateCity(ville);
+        this.telephone = SecurityValidator.validatePhoneNumber(telephone);
     }
 
     public String getNom() {

@@ -27,9 +27,9 @@ public class OrdonnanceTest {
         dateCreation = new Date();
 
         medecin = new Medecin(
-                "Dr. Dupont", "Jean", "10 Rue des Docteurs", "75000", "Paris",
+                "Dupont", "Jean", "10 Rue des Docteurs", "75000", "Paris",
                 "0123456789", "jean.dupont@example.com", "MED001",
-                "AGR123456789"
+                "83456789011"
         );
 
         patient = new Client(

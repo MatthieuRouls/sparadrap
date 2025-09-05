@@ -1,5 +1,7 @@
 package main.model.Medicament;
 
+import main.model.security.SecurityValidator;
+
 import java.util.Date;
 
 public class Medicament {
@@ -18,12 +20,14 @@ public class Medicament {
     }
 
     public Medicament(String nom, CategorieMedicament categorie, double prix, int quantiteStock,Date dateMiseEnService, Date datePeremption) {
-        this.nom = nom;
-        this.categorie = categorie;
-        this.prix = prix;
-        this.quantiteStock = quantiteStock;
-        this.dateMiseEnService = dateMiseEnService;
-        this.datePeremption = datePeremption;
+        this.nom = SecurityValidator.validateMedicamentName(nom);
+        this.categorie = SecurityValidator.validateNotNull(categorie, "Catégorie");
+        this.prix = SecurityValidator.validatePrix(prix);
+        this.quantiteStock = SecurityValidator.validateStock(quantiteStock);
+        this.dateMiseEnService = SecurityValidator.validateDate(dateMiseEnService, "Date de mise en service");
+        this.datePeremption = SecurityValidator.validateFutureDate(datePeremption, "Date de péremption");
+        SecurityValidator.validateDateOrder(dateMiseEnService, datePeremption,
+                "Date de mise en service", "Date de péremption");
     }
 
     public String getNom() {
@@ -51,36 +55,27 @@ public class Medicament {
         this.categorie = categorie;
     }
     public void setPrix(double prix) {
-        this.prix = prix;
+        this.prix = SecurityValidator.validatePrix(prix);
     }
     public void setQuantiteStock(int quantiteStock) {
-        this.quantiteStock = quantiteStock;
+        this.quantiteStock = SecurityValidator.validateStock(quantiteStock);
     }
     public void setDatePeremption(Date datePeremption) {
         this.datePeremption = datePeremption;
     }
 
     public void reduireStock(int quantite) throws StockInsuffisantException {
-        if (quantite <= 0) {
-            throw new IllegalArgumentException("La quantité doit être positive.");
-        }
-        if (quantiteStock < quantite) {
-            throw new StockInsuffisantException("Stock insuffisant pour réduire de " + quantite + ". Stock actuel : " + quantiteStock);
-        }
+        SecurityValidator.validateStockOperation(this.quantiteStock, quantite, "REDUCTION");
         quantiteStock -= quantite;
     }
 
     public void augmenterStock(int quantite) {
-        if (quantite <= 0) {
-            throw new IllegalArgumentException("La quantite doit etre positive.");
-        }
+        SecurityValidator.validateStockOperation(this.quantiteStock, quantite, "ADDITION");
         quantiteStock += quantite;
     }
 
     public boolean isDisponible(int quantite) {
-        if (quantite <= 0) {
-            throw new IllegalArgumentException("La quantite doit etre positive.");
-        }
+        SecurityValidator.validateQuantite(quantite);
         return quantiteStock >= quantite;
     }
 
