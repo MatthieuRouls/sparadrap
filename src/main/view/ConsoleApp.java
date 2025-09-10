@@ -1,5 +1,6 @@
 package main.view;
 
+import main.model.Document.TypeDocument.Ordonnance;
 import main.model.Medicament.CategorieMedicament;
 import main.model.Medicament.Medicament;
 import main.model.Medicament.TypeAchat;
@@ -8,6 +9,7 @@ import main.model.Personne.CategoriePersonne.Medecin;
 import main.model.Transaction.TypeTransaction.Achat;
 import main.model.service.GestPharmacieService;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ConsoleApp {
@@ -71,6 +73,23 @@ public class ConsoleApp {
             case 2 -> rechercherClient();
             //case 3 -> modifierClient();
             case 4 -> supprimerClient();
+        }
+    }
+
+    private static void gestionMedecins() {
+        System.out.println("\n=== GESTION DES MEDECINS ===");
+        System.out.println("1. Ajouter un médecin");
+        System.out.println("2. Rechercher un médecin");
+        System.out.println("3. Modifier un médecin");
+        System.out.println("4. Supprimer un médecin");
+        System.out.println("0. Retour");
+        System.out.println("Votre choix : ");
+        int choix = lireEntier();
+        switch (choix) {
+            case 1 -> ajouterMedecin();
+            case 2 -> rechercherMedecin();
+            case 3 -> modifierMedecin();
+            case 4 -> supprimerMedecin();
         }
     }
 
@@ -324,24 +343,6 @@ public class ConsoleApp {
         }
     }
 
-    // Méthodes à implémenter pour un prototype complet
-    private static void gestionMedecins() {
-        System.out.println("\n=== GESTION DES MEDECINS ===");
-        System.out.println("1. Ajouter un médecin");
-        System.out.println("2. Rechercher un médecin");
-        System.out.println("3. Modifier un médecin");
-        System.out.println("4. Supprimer un médecin");
-        System.out.println("0. Retour");
-        System.out.println("Votre choix : ");
-        int choix = lireEntier();
-        switch (choix) {
-            case 1 -> ajouterMedecin();
-            case 2 -> rechercherMedecin();
-            case 3 -> modifierMedecin();
-            //case 4 -> supprimerMedecin();
-        }
-    }
-
     private static void ajouterMedecin() {
         System.out.println("\n--- Ajouter un médecin ---");
         try {
@@ -363,6 +364,12 @@ public class ConsoleApp {
             String numRPPS = scanner.nextLine();
             System.out.println("Identifiant : ");
             String identifiant = scanner.nextLine();
+
+            Medecin medecin = new Medecin(nom, prenom, adresse, codePostal, ville,
+                                    numTelephone, email, numRPPS, identifiant);
+
+            service.ajouterMedecin(medecin);
+            System.out.println("Medecin ajoute avec succes !");
 
             System.out.println("✅ Médecin ajouté avec succes !");
         } catch (Exception e) {
@@ -464,10 +471,483 @@ public class ConsoleApp {
         service.modifierMedecin(medecin);
         System.out.println("✅ Médecin modifié avec succès !");
     }
-    private static void supprimerClient() { /* À implémenter */ }
-    private static void ajouterMedicament() { /* À implémenter */ }
-    private static void modifierStock() { /* À implémenter */ }
-    private static void rechercherMedicament() { /* À implémenter */ }
-    private static void venteOrdonnance() { /* À implémenter */ }
-    private static void historiqueVentes() { /* À implémenter */ }
+
+    private static void supprimerMedecin() {
+        System.out.println("Identifiant du Medecin a supprimer : ");
+        String numRPPS = scanner.nextLine();
+        Optional<Medecin> medecinOpt = service.rechercherMedecin(numRPPS);
+        if (medecinOpt.isEmpty()) {
+            System.out.println("❌ Medecin non trouve.");
+            return;
+        }
+        System.out.println("Confirmer la suppression (Oui/Non) ? ");
+        String confirmation = scanner.nextLine();
+        if ("Oui".equalsIgnoreCase(confirmation)) {
+            service.supprimerMedecin(numRPPS);
+            System.out.println("✅ Medecin supprimé avec succès !");
+        }
+    }
+
+    private static void supprimerClient() {
+        System.out.println("Identifiant du client a supprimer : ");
+        String identifiant = scanner.nextLine();
+        Optional<Client> clientOpt = service.rechercherClient(identifiant);
+        if (clientOpt.isEmpty()) {
+            System.out.println("❌ Client non trouve.");
+            return;
+        }
+        System.out.println("Confirmer la suppression (Oui/Non) ? ");
+        String confirmation = scanner.nextLine();
+        if ("Oui".equalsIgnoreCase(confirmation)) {
+            service.supprimerClient(identifiant);
+            System.out.println("✅ Client supprimé avec succès !");
+        }
+    }
+
+    private static void ajouterMedicament() {
+        System.out.println("\n--- Ajouter un medicament ---");
+        try {
+            System.out.print("Nom : ");
+            String nom = scanner.nextLine();
+            System.out.print("Categorie (ANALGESIQUES/ANTIBIOTIQUES/...)");
+            CategorieMedicament categorie = CategorieMedicament.valueOf(scanner.nextLine());
+            System.out.print("Prix : ");
+            double prix = Double.parseDouble(scanner.nextLine());
+            System.out.print("Quantite en stock : ");
+            int quantite = lireEntier();
+            System.out.print("Date de peremption (format : mm/jj/aaaa) : ");
+            Date peremption = new SimpleDateFormat("MM/dd/yyyy").parse(scanner.nextLine());
+            Medicament medicament = new Medicament(nom, categorie, prix, quantite, new Date(), peremption);
+            inventaire.put(nom, medicament);
+            System.out.println("✅ Médicament ajouté avec succès !");
+        } catch (Exception e) {
+            System.out.println("❌ Erreur : " + e.getMessage());
+        }
+    }
+
+    private static void modifierStock() {
+        afficherInventaire();
+        System.out.println("\nNom du medicament : ");
+        String nom = scanner.nextLine();
+        Medicament medicament = inventaire.get(nom);
+        if (medicament == null) {
+            System.out.println("❌ Médicament non trouvé.");
+            return;
+        }
+        System.out.println("Nouvelle quanitte en stock : ");
+        int nouvelleQuantite = lireEntier();
+        medicament.setQuantiteStock(nouvelleQuantite);
+        System.out.println("✅ Stock mis à jour avec succès !");
+    }
+
+    private static void rechercherMedicament() {
+        System.out.println("Nom du medicament : ");
+        String nom = scanner.nextLine();
+        Medicament medicament = inventaire.get(nom);
+        if (medicament == null) {
+            System.out.println("Medicament trouve : ");
+            System.out.printf("%-20s %-15s %-10.2f€ %-10d%n",
+                    medicament.getNom(),
+                    medicament.getCategorie(),
+                    medicament.getPrix(),
+                    medicament.getQuantiteStock());
+        } else {
+            System.out.println("❌ Médicament non trouvé.");
+        }
+    }
+
+    private static String genererReferenceOrdonnance() {
+        return "ORD" + System.currentTimeMillis();
+    }
+
+    private static String genererReferencAchat() {
+        return "ACH" + System.currentTimeMillis();
+    }
+
+    private static void venteOrdonnance() {
+        System.out.println("\n--- Vente sur ordonnance ---");
+        System.out.println("Identifiant du client : ");
+        String identifiantClient = scanner.nextLine();
+        Optional<Client> clientOpt = service.rechercherClient(identifiantClient);
+
+        if (clientOpt.isEmpty()) {
+            System.out.println("❌ Client non trouvé.");
+            return;
+        }
+        Client client = clientOpt.get();
+
+        System.out.println("Identifiant du medecin prescripteur : ");
+        String identifiantMedecin = scanner.nextLine();
+
+        Optional<Medecin> medecinOpt = service.rechercherMedecin(identifiantMedecin);
+
+        if (medecinOpt.isEmpty()) {
+            System.out.println("❌ Médecin non trouvé.");
+            return;
+        }
+        Medecin medecin = medecinOpt.get();
+
+        List<Medicament> medicamentsVente = new ArrayList<>();
+        Map<Medicament, Integer> quantites = new HashMap<>();
+        List<String> medicamentsNonDisponibles = new ArrayList<>();
+        List<String> medicamentsPerimes = new ArrayList<>();
+
+        boolean ajouterMedicaments = true;
+        while (ajouterMedicaments) {
+            afficherInventaire();
+            System.out.print("\nNom du medicament (ou 'fin' pour terminer) : ");
+            String nomMed = scanner.nextLine();
+
+            if ("fin".equalsIgnoreCase(nomMed)) {
+                ajouterMedicaments = false;
+                continue;
+            }
+
+            Medicament medicament = inventaire.get(nomMed);
+            if (medicament == null) {
+                System.out.println("❌ Médicament non trouvé.");
+                continue;
+            }
+
+            Date now = new Date();
+            if (now.after(medicament.getDatePeremption())) {
+                medicamentsPerimes.add(nomMed + " (périmé le " + medicament.getDatePeremption() + ")");
+                System.out.println("⚠️ Attention : " + nomMed + " est périmé !");
+                System.out.print("Continuer quand meme ? (Oui/Non) : ");
+                String continuer = scanner.nextLine();
+                if ("Oui".equalsIgnoreCase(continuer)) {
+                    continue;
+                }
+            }
+
+            System.out.println("Quantite prescrite : ");
+            int quantitePrescrite = lireEntier();
+
+            if (quantitePrescrite <= 0) {
+                System.out.println("❌ Quantité invalide.");
+                continue;
+            }
+
+            if (!medicament.isDisponible(quantitePrescrite)) {
+                medicamentsNonDisponibles.add(nomMed + " (demande: " + quantitePrescrite +
+                        ", disponible: " + medicament.getQuantiteStock() + ")");
+                System.out.println("⚠️ Stock insuffisant pour " + nomMed);
+                System.out.print("Stock disponible : " + medicament.getQuantiteStock());
+                System.out.print("Quantite a delivrer (0 pour ignorer) : ");
+                int quantiteDelivree = lireEntier();
+
+                if (quantiteDelivree <= 0) {
+                    continue;
+                }
+                if (quantiteDelivree > medicament.getQuantiteStock()) {
+                    System.out.println("❌ Quantité supérieure au stock disponible.");
+                    continue;
+                }
+                quantitePrescrite = quantiteDelivree;
+            }
+
+            medicamentsVente.add(medicament);
+            quantites.put(medicament, quantitePrescrite);
+
+            try {
+                medicament.reduireStock(quantitePrescrite);
+                System.out.println("✅ " + quantitePrescrite + "x " + nomMed + " ajouté(s) à la vente.");
+            } catch (Exception e) {
+                System.out.println("❌ Erreur lors de la réduction du stock : " + e.getMessage());
+                medicamentsVente.remove(medicament);
+                quantites.remove(medicament);
+            }
+        }
+
+        if (medicamentsVente.isEmpty()) {
+            System.out.println("❌ Aucun médicament sélectionné. Vente annulée.");
+            return;
+        }
+
+        String referenceOrdonnance = genererReferenceOrdonnance();
+        Ordonnance ordonnance = new Ordonnance(new Date(), medecin, client,
+                new ArrayList<>(medicamentsVente),
+                new HashMap<>(), referenceOrdonnance);
+
+        service.enregistrerOrdonnance(ordonnance);
+
+        String referenceAchat = genererReferencAchat();
+        Achat achat = new Achat(new Date(), client, null, referenceAchat,
+                TypeAchat.ORDONNANCE, medicamentsVente, quantites);
+
+        service.enregistrerAchat(achat);
+
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("           RÉCAPITULATIF VENTE SUR ORDONNANCE");
+        System.out.println("=".repeat(60));
+
+        System.out.println("📋 INFORMATIONS GÉNÉRALES");
+        System.out.println("   Client : " + client.getNom() + " " + client.getPrenom());
+        System.out.println("   Médecin prescripteur : " + medecin.getNom() + " " + medecin.getPrenom());
+        System.out.println("   Date : " + new Date());
+        System.out.println("   Référence ordonnance : " + referenceOrdonnance);
+        System.out.println("   Référence achat : " + referenceAchat);
+
+        System.out.println("\n💊 MÉDICAMENTS DÉLIVRÉS");
+        for (Map.Entry<Medicament, Integer> entry : quantites.entrySet()) {
+            Medicament med = entry.getKey();
+            int quantite = entry.getValue();
+            double sousTotal = med.getPrix() * quantite;
+            System.out.printf("   - %-20s x%-3d = %8.2f€ (expire le %s)%n",
+                    med.getNom(), quantite, sousTotal, med.getDatePeremption());
+        }
+
+        if (!medicamentsNonDisponibles.isEmpty()) {
+            System.out.println("\n⚠️  MÉDICAMENTS NON DISPONIBLES EN QUANTITÉ SUFFISANTE");
+            medicamentsNonDisponibles.forEach(msg -> System.out.println("   - " + msg));
+        }
+
+        if (!medicamentsPerimes.isEmpty()) {
+            System.out.println("\n⚠️  MÉDICAMENTS PÉRIMÉS DÉLIVRÉS");
+            medicamentsPerimes.forEach((msg -> System.out.println("   - " + msg)));
+        }
+
+        System.out.println("\n CALCULS FINANCIERS");
+        System.out.printf("  Montant total: %10.2f€%n", achat.getMontantTotal());
+
+        if (client.getMutuelle() != null) {
+            System.out.printf("   Taux remboursement mutuelle : %6.1f%%%n", client.getMutuelle().getTauxRemboursement());
+            System.out.printf("   Montant remboursé mutuelle : %8.2f€%n", achat.getMontantRembourse());
+            double resteAPayer = achat.getMontantTotal() - achat.getMontantRembourse();
+            System.out.printf("   Reste à payer : %13.2f€%n", resteAPayer);
+        } else {
+            System.out.println("   Pas de mutuelle - Montant intégral à payer");
+        }
+
+
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("✅ Vente sur ordonnance enregistrée avec succès !");
+    }
+
+
+    private static void historiqueVentes() {
+        System.out.println("\n=== HISTORIQUE DES VENTES ===");
+        System.out.println("1. Toutes les ventes");
+        System.out.println("2. Ventes par période");
+        System.out.println("3. Ventes par client");
+        System.out.println("4. Historique des ordonnances");
+        System.out.println("5. Rechercher une ordonnance");
+        System.out.println("0. Retour");
+        System.out.print("Votre choix : ");
+
+        int choix = lireEntier();
+        scanner.nextLine();
+
+        switch (choix) {
+            case 1 -> afficherToutesLesVentes();
+            case 2 -> afficherVentesParPeriode();
+            case 3 -> afficherVentesParClient();
+            case 4 -> afficherHistoriqueOrdonnances();
+            case 5 -> rechercherOrdonnance();
+        }
+    }
+
+    private static void afficherToutesLesVentes() {
+        System.out.println("\n=== TOUTES LES VENTES ===");
+
+        Date debutPeriode = new Date(0);
+        Date finPeriode = new Date();
+
+        List<Achat> achats = service.getAchatsParPeriode(debutPeriode, finPeriode);
+
+        if (achats.isEmpty()) {
+            System.out.println("Aucune vente enregistree.");
+            return;
+        }
+
+        System.out.printf("%-15s %-20s %-12s %-10s %-10s %-10s%n",
+                "RÉFÉRENCE", "CLIENT", "TYPE", "MONTANT", "REMBOURSÉ", "NET");
+        System.out.println("-".repeat(90));
+
+        double totalVentes = 0;
+        double totalRembourse = 0;
+
+        for (Achat achat : achats) {
+            double net = achat.getMontantTotal() - achat.getMontantRembourse();
+            System.out.printf("%-15s %-20s %-12s %9.2f€ %9.2f€ %9.2f€%n",
+                    achat.getReference(),
+                    (achat.getClient().getNom() + " " + achat.getClient().getPrenom()).substring(0, Math.min(20, achat.getClient().getNom().length() + achat.getClient().getPrenom().length() + 1)),
+                    achat.getType(),
+                    achat.getMontantTotal(),
+                    achat.getMontantRembourse(),
+                    net);
+
+            totalVentes += achat.getMontantTotal();
+            totalRembourse += achat.getMontantRembourse();
+        }
+
+        System.out.println("-".repeat(90));
+        System.out.printf("TOTAL (%d ventes) : %32.2f€ %9.2f€ %9.2f€%n",
+                achats.size(), totalVentes, totalRembourse, (totalVentes - totalRembourse));
+    }
+
+    private static void afficherVentesParPeriode() {
+        System.out.println("\n=== VENTES PAR PÉRIODE ===");
+        System.out.println("1. Aujourd'hui");
+        System.out.println("2. Cette semaine");
+        System.out.println("3. Ce mois");
+        System.out.println("4. Période personnalisée");
+        System.out.print("Votre choix : ");
+
+        int choix = lireEntier();
+        Date now = new Date();
+        Date debut;
+        String libellePeriode;
+
+        switch (choix) {
+            case 1:
+                // Aujourd'hui (minuit à maintenant)
+                Calendar cal = Calendar.getInstance();
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                debut = cal.getTime();
+                libellePeriode = "Aujourd'hui";
+                break;
+            case 2:
+                // Cette semaine (lundi à maintenant)
+                Calendar calSemaine = Calendar.getInstance();
+                calSemaine.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
+                calSemaine.set(Calendar.HOUR_OF_DAY, 0);
+                calSemaine.set(Calendar.MINUTE, 0);
+                calSemaine.set(Calendar.SECOND, 0);
+                calSemaine.set(Calendar.MILLISECOND, 0);
+                debut = calSemaine.getTime();
+                libellePeriode = "Cette semaine";
+                break;
+            case 3:
+                // Ce mois (1er du mois à maintenant)
+                Calendar calMois = Calendar.getInstance();
+                calMois.set(Calendar.DAY_OF_MONTH, 1);
+                calMois.set(Calendar.HOUR_OF_DAY, 0);
+                calMois.set(Calendar.MINUTE, 0);
+                calMois.set(Calendar.SECOND, 0);
+                calMois.set(Calendar.MILLISECOND, 0);
+                debut = calMois.getTime();
+                libellePeriode = "Ce mois";
+                break;
+            case 4:
+                System.out.println("Période personnalisée non implémentée pour ce prototype.");
+                return;
+            default:
+                System.out.println("Choix invalide.");
+                return;
+        }
+
+        List<Achat> achats = service.getAchatsParPeriode(debut, now);
+
+        System.out.println("\n=== VENTES - " + libellePeriode.toUpperCase() + " ===");
+        if (achats.isEmpty()) {
+            System.out.println("Aucune vente enregistre pour cette periode.");
+            return;
+        }
+
+        System.out.printf("%-15s %-20s %-12s %-10s %-10s %-10s%n",
+                "RÉFÉRENCE", "CLIENT", "TYPE", "MONTANT", "REMBOURSÉ", "NET");
+        System.out.println("-".repeat(90));
+
+        double totalPeriode = 0;
+        double totalRemboursePeriode = 0;
+
+        for (Achat achat : achats) {
+            double net = achat.getMontantTotal() - achat.getMontantRembourse();
+            String nomComplet = achat.getClient().getNom() + " " + achat.getClient().getPrenom();
+            System.out.printf("%-15s %-20s %-12s %9.2f€ %9.2f€ %9.2f€%n",
+                    achat.getReference(),
+                    nomComplet.length() > 20 ? nomComplet.substring(0, 20) : nomComplet,
+                    achat.getType(),
+                    achat.getMontantTotal(),
+                    achat.getMontantRembourse(),
+                    net);
+
+            totalPeriode += achat.getMontantTotal();
+            totalRemboursePeriode += achat.getMontantRembourse();
+        }
+
+        System.out.println("-".repeat(90));
+        System.out.printf("TOTAL %s : %25.2f€ %9.2f€ %9.2f€%n",
+                libellePeriode, totalPeriode, totalRemboursePeriode,
+                (totalPeriode - totalRemboursePeriode));
+    }
+
+    private static void afficherVentesParClient() {
+        System.out.print("Identifiant du client : ");
+        String identifiant = scanner.nextLine();
+
+        Optional<Client> clientOpt = service.rechercherClient(identifiant);
+        if (clientOpt.isEmpty()) {
+            System.out.println("Client non trouve.");
+            return;
+        }
+
+        Client client = clientOpt.get();
+        List<Achat> achats = service.getAchatsParClient(client);
+
+        if (achats.isEmpty()) {
+            System.out.println("Aucun achat trouve pour ce client.");
+            return;
+        }
+
+        System.out.println("\n=== ACHATS DE " + client.getNom().toUpperCase() + " " +
+                client.getPrenom().toUpperCase() + " ===");
+
+        System.out.printf("%-15s %-12s %-15s %-10s %-10s %-10s%n",
+                "RÉFÉRENCE", "DATE", "TYPE", "MONTANT", "REMBOURSÉ", "PAYÉ");
+        System.out.println("-".repeat(85));
+
+        double totalClient = 0;
+        double totalRembourseClient = 0;
+
+        for (Achat achat : achats) {
+            double paye = achat.getMontantTotal() - achat.getMontantRembourse();
+            System.out.printf("%-15s %-12s %-15s %9.2f€ %9.2f€ %9.2f€%n",
+                    achat.getReference(),
+                    achat.getDateTransaction().toString().substring(0, 10),
+                    achat.getType(),
+                    achat.getMontantTotal(),
+                    achat.getMontantRembourse(),
+                    paye);
+
+            totalClient += achat.getMontantTotal();
+            totalRembourseClient += achat.getMontantRembourse();
+        }
+
+        System.out.println("-".repeat(85));
+        System.out.printf("TOTAL CLIENT : %28.2f€ %9.2f€ %9.2f€%n",
+                totalClient, totalRembourseClient, (totalClient - totalRembourseClient));
+
+        if (client.getMutuelle() != null) {
+            System.out.println("\n📋 Mutuelle : " + client.getMutuelle().getNom() +
+                    " (Taux : " + client.getMutuelle().getTauxRemboursement() + "%)");;
+        } else {
+            System.out.println("\n📋 Aucune mutuelle enregistrée");
+        }
+    }
+
+    private static void afficherHistoriqueOrdonnances() {
+        System.out.println("\n=== HISTORIQUE DES ORDONNANCES ===");
+
+        // Pour le prototype, on récupère toutes les ordonnances
+        // Note: Il faudrait ajouter une méthode getToutesLesOrdonnances() dans le service
+        System.out.println("Cette fonctionnalité nécessite l'ajout d'une méthode dans GestPharmacieService.");
+        System.out.println("Vous pouvez rechercher une ordonnance spécifique avec l'option 5.");
+    }
+
+    private static void rechercherOrdonnance() {
+        System.out.print("Reference de l'ordonnance : ");
+        String reference = scanner.nextLine();
+
+        // Pour le prototype, on simule la recherche
+        // Il faudrait ajouter une méthode rechercherOrdonnance(String reference) dans le service
+        System.out.println("Recherche d'ordonnance par référence non implémentée dans ce prototype.");
+        System.out.println("Référence recherchée : " + reference);
+    }
 }
+
+

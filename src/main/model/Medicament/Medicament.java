@@ -57,8 +57,9 @@ public class Medicament {
     public void setPrix(double prix) {
         this.prix = SecurityValidator.validatePrix(prix);
     }
-    public void setQuantiteStock(int quantiteStock) {
-        this.quantiteStock = SecurityValidator.validateStock(quantiteStock);
+    public void setQuantiteStock(int quantiteAajouter) {
+        int quantiteValidee = SecurityValidator.validateStock(quantiteAajouter);
+        this.quantiteStock += quantiteValidee;
     }
     public void setDatePeremption(Date datePeremption) {
         this.datePeremption = datePeremption;

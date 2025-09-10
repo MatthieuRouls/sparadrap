@@ -2,6 +2,7 @@ package main.model.service;
 
 import main.model.Document.TypeDocument.Ordonnance;
 import main.model.Medicament.Medicament;
+import main.model.Medicament.TypeAchat;
 import main.model.Organisme.TypeOrganisme.Mutuelle;
 import main.model.Personne.CategoriePersonne.Client;
 import main.model.Personne.CategoriePersonne.Medecin;
@@ -156,11 +157,20 @@ public class GestPharmacieService {
     }
 
     public List<Achat> getAchatsParMedecin(Medecin medecin) {
-        List<Achat> achatsParMedecin = new ArrayList<>();
-        for (Achat achat : achats) {
-            achatsParMedecin.add(achat);
-        }
-        return achatsParMedecin;
+        SecurityValidator.validateNotNull(medecin, "Médecin");
+        return achats.stream()
+                .filter(achat -> {
+                    // Vérifier si l'achat est lié à une ordonnance de ce médecin
+                    List<Ordonnance> ordonnancesMedecin = getOrdonnancesParMedecin(medecin);
+                    for (Ordonnance ord : ordonnancesMedecin) {
+                        if (achat.getReference().contains(ord.getReference()) ||
+                                achat.getDateTransaction().equals(ord.getDateCreation())) {
+                            return true;
+                        }
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
     }
 
     public void enregistrerOrdonnance(Ordonnance ordonnance) {
@@ -179,13 +189,76 @@ public class GestPharmacieService {
     }
 
     public List<Ordonnance> getOrdonnancesParMedecin(Medecin medecin) {
-        List<Ordonnance> ordonnancesParMedecin = new ArrayList<>();
+        SecurityValidator.validateNotNull(medecin, "Médecin");
+        return ordonnances.stream()
+                .filter(ordonnance -> ordonnance.getMedecin().equals(medecin))
+                .collect(Collectors.toList());
+    }
+
+    public List<Ordonnance> getToutesLesOrdonnances() {
+        return new ArrayList<>(ordonnances);
+    }
+
+    public Optional<Ordonnance> rechercherOrdonnance(String reference) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return Optional.empty();
+        }
+
+        return ordonnances.stream()
+                .filter(ordonnance -> ordonnance.getReference().equals(reference.trim()))
+                .findFirst();
+    }
+
+    public double calculerMontantRembourse(Date debut, Date fin) {
+        return getAchatsParPeriode(debut, fin).stream()
+                .mapToDouble(Achat::getMontantRembourse)
+                .sum();
+    }
+
+    public Map<String, Double> getStatistiquesRemboursementMutuelle(Mutuelle mutuelle, Date debut, Date fin) {
+        SecurityValidator.validateNotNull(mutuelle, "Mutuelle");
+
+        List<Achat> achatsAvecMutuelle = getAchatsParPeriode(debut, fin).stream()
+                .filter(achat -> achat.getClient().getMutuelle() != null &&
+                        achat.getClient().getMutuelle().equals(mutuelle))
+                .collect(Collectors.toList());
+
+        double totalAchats = achatsAvecMutuelle.stream()
+                .mapToDouble(Achat::getMontantTotal)
+                .sum();
+
+        double totalRembourse = achatsAvecMutuelle.stream()
+                .mapToDouble(Achat::getMontantRembourse)
+                .sum();
+
+        Map<String, Double> stats = new HashMap<>();
+        stats.put("totalAchats", totalAchats);
+        stats.put("totalRembourse", totalRembourse);
+        stats.put("nombreAchats", (double) achatsAvecMutuelle.size());
+        stats.put("tauxRemboursementEffectif", totalAchats > 0 ? (totalRembourse / totalAchats) * 100 : 0);
+
+        return stats;
+    }
+
+    public List<String> verifierCoherenceOrdonnancesAchats() {
+        List<String> problemes = new ArrayList<>();
+
         for (Ordonnance ordonnance : ordonnances) {
-            if (ordonnance.getNomMedecin().equals(medecin.getNom())) {
-                ordonnancesParMedecin.add(ordonnance);
+            // Rechercher l'achat correspondant
+            boolean achatTrouve = achats.stream()
+                    .anyMatch(achat ->
+                            achat.getClient().equals(ordonnance.getPatient()) &&
+                                    achat.getDateTransaction().equals(ordonnance.getDateCreation()) &&
+                                    achat.getType() == TypeAchat.ORDONNANCE
+                    );
+
+            if (!achatTrouve) {
+                problemes.add("Ordonnance " + ordonnance.getReference() +
+                        " sans achat correspondant");
             }
         }
-        return ordonnancesParMedecin;
+
+        return problemes;
     }
 
     public double calculerChiffreAffaires(Date debut, Date fin) {
