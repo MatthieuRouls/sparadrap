@@ -21,22 +21,26 @@ public class AchatTest {
     private Medicament medicament1;
     private Medicament medicament2;
     private Date dateTransaction;
+    private Date dateMiseEnService;
+    private Date datePeremption;
     private Map<Medicament, Integer> quantites;
     private Mutuelle mutuelle;
 
     @BeforeEach
     public void setUp() {
         dateTransaction = new Date();
+        dateMiseEnService = new Date();
+        datePeremption = new Date(dateMiseEnService.getTime() + 365L * 24 * 60 * 60 * 1000);;
         mutuelle = new Mutuelle("Mutuelle Générale", "75000", "Paris", "0123456789", 70.0);
         client = new Client("Martin", "Pierre", "12 Rue de Paris", "75000", "Paris",
                 "0123456789", "pierre.martin@example.com", "CL001",
                 "123456789012345", mutuelle, null);
         pharmacien = new Pharmacien("Dupont", "Jean", "10 Rue des Pharmaciens", "75000", "Paris",
                 "0123456789", "jean.dupont@example.com", "PH001",
-                "PH123456789", "Pharmacie Clinique", new Date());
+                "12345678912", "Pharmacie Clinique", new Date());
 
-        medicament1 = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, new Date(), new Date());
-        medicament2 = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES, 10.99, 50, new Date(), new Date());
+        medicament1 = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, dateMiseEnService, datePeremption);
+        medicament2 = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES, 10.99, 50, dateMiseEnService, datePeremption);
 
         List<Medicament> medicaments = new ArrayList<>();
         medicaments.add(medicament1);
@@ -74,7 +78,7 @@ public class AchatTest {
 
     @Test
     public void testAjouterMedicament() {
-        Medicament medicament3 = new Medicament("Ibuprofène", CategorieMedicament.ANTI_INFLAMMATOIRES, 7.99, 80, new Date(), new Date());
+        Medicament medicament3 = new Medicament("Ibuprofene", CategorieMedicament.ANTI_INFLAMMATOIRES, 7.99, 80, dateMiseEnService, datePeremption);
         achat.ajouterMedicament(medicament3, 1);
         assertEquals(3, achat.getMedicaments().size());
         assertEquals(5.99 * 2 + 10.99 * 1 + 7.99 * 1, achat.getMontantTotal(), 0.001);
@@ -100,7 +104,7 @@ public class AchatTest {
     public void testClientSansMutuelle() {
         Client clientSansMutuelle = new Client("Durand", "Paul", "14 Rue de Marseille", "13000", "Marseille",
                 "0987654321", "paul.durand@example.com", "CL002",
-                "987654321098765", null, null);
+                "197035767242191", null, null);
         Achat achatSansMutuelle = new Achat(dateTransaction, clientSansMutuelle, pharmacien, "ACH002", TypeAchat.DIRECT, new ArrayList<>(), new HashMap<>());
         assertEquals(0.0, achatSansMutuelle.getMontantRembourse(), 0.001);
     }

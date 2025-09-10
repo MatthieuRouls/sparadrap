@@ -82,11 +82,12 @@ public class GestPharmacieService {
         return medecins.remove(identifiant) != null;
     }
 
-    public Optional<Medecin> rechercherMedecin(String identifiant) {
-        if (identifiant == null || identifiant.trim().isEmpty()) {
-            return Optional.empty();
+    public Optional<Medecin> rechercherMedecin(String numRPPS) {
+        if (medecins.containsKey(numRPPS)) {
+            return Optional.of(medecins.get(numRPPS)); // Retourne le médecin trouvé
+        } else {
+            return Optional.empty(); // Médecin non trouvé
         }
-        return Optional.ofNullable(medecins.get(identifiant.trim()));
     }
 
     public void ajouterMutuelle(Mutuelle mutuelle) {

@@ -84,12 +84,17 @@ public class Achat extends Transaction {
 
     @Override
     public void calculerMontantTotal() {
+        calculerMontantTotalInternal();
+        calculerMontantRembourse();
+        SecurityValidator.validateTransaction(getMontantTotal(), getMontantRembourse());
+    }
+
+    public void calculerMontantTotalInternal() {
         double total = 0.0;
         for (Map.Entry<Medicament, Integer> entry : quantites.entrySet()) {
             total += entry.getKey().getPrix() * entry.getValue();
         }
         setMontantTotal(total);
-        SecurityValidator.validateTransaction(getMontantTotal(), getMontantRembourse());
     }
 
     private void calculerMontantRembourse() {

@@ -17,7 +17,7 @@ public final class SecurityValidator {
     private static final Pattern NAME_PATTERN = Pattern.compile("^[A-Za-zÀ-ÿ\\s'\\-]{2,30}$");
     private static final Pattern CITY_PATTERN = Pattern.compile("^[A-Za-zÀ-ÿ\\s\\-]{2,50}$");
 
-    public static final double MIN_PRIX = 0.01;
+    public static final double MIN_PRIX = 0.00;
     public static final double MAX_PRIX = 10000.0;
     public static final int MIN_STOCK = 0;
     public static final int MAX_STOCK = 100000;

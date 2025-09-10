@@ -17,7 +17,7 @@ public class MedicamentTest {
     @BeforeEach
     public void setUp() {
         dateMiseEnService = new Date();
-        datePeremption = new Date(dateMiseEnService.getTime() + 31536000000L); // Ajoute 1 an en millisecondes
+        datePeremption = new Date(dateMiseEnService.getTime() + 365L * 24 * 60 * 60 * 1000); // Ajoute 1 an
         medicament = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, dateMiseEnService, datePeremption);
     }
 

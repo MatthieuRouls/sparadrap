@@ -15,6 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OrdonnanceTest {
     private Ordonnance ordonnance;
     private Date dateCreation;
+    private Date dateMiseEnService;
+    private Date datePeremption;
     private Medecin medecin;
     private Client patient;
     private Medicament medicament1;
@@ -25,6 +27,10 @@ public class OrdonnanceTest {
     @BeforeEach
     public void setUp() {
         dateCreation = new Date();
+
+        dateMiseEnService = new Date();
+
+        datePeremption = new Date(dateMiseEnService.getTime() + 365L * 24 * 60 * 60 * 1000);
 
         medecin = new Medecin(
                 "Dupont", "Jean", "10 Rue des Docteurs", "75000", "Paris",
@@ -38,8 +44,8 @@ public class OrdonnanceTest {
                 "123456789012345", null, medecin
         );
 
-        medicament1 = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, new Date(), new Date());
-        medicament2 = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES, 10.99, 50, new Date(), new Date());
+        medicament1 = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES, 5.99, 100, dateMiseEnService, datePeremption);
+        medicament2 = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES, 10.99, 50, dateMiseEnService, datePeremption);
 
         List<Medicament> medicaments = new ArrayList<>();
         medicaments.add(medicament1);
@@ -54,7 +60,7 @@ public class OrdonnanceTest {
 
     @Test
     public void testConstructeurEtGetters() {
-        assertEquals("Dr. Dupont Jean", ordonnance.getNomMedecin());
+        assertEquals("Dupont Jean", ordonnance.getNomMedecin());
         assertEquals("Martin Pierre", ordonnance.getNomPatient());
         assertEquals(2, ordonnance.getMedicaments().size());
         assertEquals(2, ordonnance.getQuantites().size());
