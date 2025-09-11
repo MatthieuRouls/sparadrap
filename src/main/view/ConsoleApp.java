@@ -59,118 +59,226 @@ public class ConsoleApp {
     }
 
     private static void gestionClients() {
+        boolean continuer = true;
+        while (continuer) {
         System.out.println("\n=== GESTION DES CLIENTS ===");
         System.out.println("1. Ajouter un client");
         System.out.println("2. Rechercher un client");
         System.out.println("3. Modifier un client");
         System.out.println("4. Supprimer un client");
-        System.out.println("0. Retour");
-        System.out.print("Votre choix : ");
-
+        System.out.println("0. Retour au menu principal");
+        System.out.println("Votre choix : ");
         int choix = lireEntier();
+
         switch (choix) {
             case 1 -> ajouterClient();
             case 2 -> rechercherClient();
-            //case 3 -> modifierClient();
+            case 3 -> modifierClient();
             case 4 -> supprimerClient();
+            case 0 -> continuer = false;
+            default -> System.out.println("Choix invalide !");
+        }
         }
     }
 
     private static void gestionMedecins() {
-        System.out.println("\n=== GESTION DES MEDECINS ===");
-        System.out.println("1. Ajouter un médecin");
-        System.out.println("2. Rechercher un médecin");
-        System.out.println("3. Modifier un médecin");
-        System.out.println("4. Supprimer un médecin");
-        System.out.println("0. Retour");
-        System.out.println("Votre choix : ");
-        int choix = lireEntier();
-        switch (choix) {
-            case 1 -> ajouterMedecin();
-            case 2 -> rechercherMedecin();
-            case 3 -> modifierMedecin();
-            case 4 -> supprimerMedecin();
+        boolean continuer = true;
+        while (continuer) {
+            System.out.println("\n=== GESTION DES MEDECINS ===");
+            System.out.println("1. Ajouter un médecin");
+            System.out.println("2. Rechercher un médecin");
+            System.out.println("3. Modifier un médecin");
+            System.out.println("4. Supprimer un médecin");
+            System.out.println("0. Retour");
+            System.out.println("Votre choix : ");
+            int choix = lireEntier();
+            switch (choix) {
+                case 1 -> ajouterMedecin();
+                case 2 -> rechercherMedecin();
+                case 3 -> modifierMedecin();
+                case 4 -> supprimerMedecin();
+                case 0 -> continuer = false;
+                default -> System.out.println("Choix invalide !");
+            }
         }
     }
 
     private static void gestionMedicaments() {
-        System.out.println("\n=== GESTION DES MÉDICAMENTS ===");
-        System.out.println("1. Afficher l'inventaire");
-        System.out.println("2. Ajouter un médicament");
-        System.out.println("3. Modifier le stock");
-        System.out.println("4. Rechercher un médicament");
-        System.out.println("0. Retour");
-        System.out.print("Votre choix : ");
+        boolean continuer = true;
+        while (continuer) {
+            System.out.println("\n=== GESTION DES MÉDICAMENTS ===");
+            System.out.println("1. Afficher l'inventaire");
+            System.out.println("2. Ajouter un médicament");
+            System.out.println("3. Modifier le stock");
+            System.out.println("4. Rechercher un médicament");
+            System.out.println("0. Retour");
+            System.out.print("Votre choix : ");
 
-        int choix = lireEntier();
-        switch (choix) {
-            case 1 -> afficherInventaire();
-            case 2 -> ajouterMedicament();
-            case 3 -> modifierStock();
-            case 4 -> rechercherMedicament();
+            int choix = lireEntier();
+            switch (choix) {
+                case 1 -> afficherInventaire();
+                case 2 -> ajouterMedicament();
+                case 3 -> modifierStock();
+                case 4 -> rechercherMedicament();
+                case 0 -> continuer = false;
+                default -> System.out.println("Choix invalide !");
+            }
         }
     }
 
     private static void gestionVentes() {
-        System.out.println("\n=== GESTION DES VENTES ===");
-        System.out.println("1. Nouvelle vente");
-        System.out.println("2. Vente sur ordonnance");
-        System.out.println("3. Historique des ventes");
-        System.out.println("0. Retour");
-        System.out.print("Votre choix : ");
+        boolean continuer = true;
+        while (continuer) {
+            System.out.println("\n=== GESTION DES VENTES ===");
+            System.out.println("1. Nouvelle vente");
+            System.out.println("2. Vente sur ordonnance");
+            System.out.println("3. Historique des ventes");
+            System.out.println("0. Retour");
+            System.out.print("Votre choix : ");
 
-        int choix = lireEntier();
-        switch (choix) {
-            case 1 -> nouvelleVente();
-            case 2 -> venteOrdonnance();
-            case 3 -> historiqueVentes();
+            int choix = lireEntier();
+            switch (choix) {
+                case 1 -> nouvelleVente();
+                case 2 -> venteOrdonnance();
+                case 3 -> historiqueVentes();
+                case 0 -> continuer = false;
+                default -> System.out.println("Choix invalide !");
+            }
         }
     }
 
     private static void ajouterClient() {
-        System.out.println("\n--- Ajouter un client ---");
-        try {
-            System.out.print("Nom : ");
-            String nom = scanner.nextLine();
-            System.out.print("Prénom : ");
-            String prenom = scanner.nextLine();
-            System.out.print("Numero + rue : ");
-            String adresse = scanner.nextLine();
-            System.out.print("Code postal : ");
-            String codePostal = scanner.nextLine();
-            System.out.print("Ville : ");
-            String ville = scanner.nextLine();
-            System.out.print("Téléphone : ");
-            String telephone = scanner.nextLine();
-            System.out.print("Email : ");
-            String email = scanner.nextLine();
-            System.out.print("Identifiant : ");
-            String identifiant = scanner.nextLine();
-            System.out.print("Numéro sécurité sociale : ");
-            String numeroSecu = scanner.nextLine();
+        boolean continuer = false;
+        do {
+            continuer = false;
+            try {
+                System.out.print("Nom : ");
+                String nom = scanner.nextLine();
+                System.out.print("Prénom : ");
+                String prenom = scanner.nextLine();
+                System.out.print("Numero + rue : ");
+                String adresse = scanner.nextLine();
+                System.out.print("Code postal : ");
+                String codePostal = scanner.nextLine();
+                System.out.print("Ville : ");
+                String ville = scanner.nextLine();
+                System.out.print("Téléphone : ");
+                String telephone = scanner.nextLine();
+                System.out.print("Email : ");
+                String email = scanner.nextLine();
+                System.out.print("Identifiant : ");
+                String identifiant = scanner.nextLine();
+                System.out.print("Numéro sécurité sociale : ");
+                String numeroSecu = scanner.nextLine();
 
-            Client client = new Client(nom, prenom, adresse, codePostal, ville,
-                    telephone, email, identifiant, numeroSecu, null, null);
+                Client client = new Client(nom, prenom, adresse, codePostal, ville,
+                        telephone, email, identifiant, numeroSecu, null, null);
 
-            service.ajouterClient(client);
-            System.out.println("✅ Client ajouté avec succès !");
+                service.ajouterClient(client);
+                System.out.println("✅ Client ajouté avec succès !");
 
-        } catch (Exception e) {
-            System.out.println("❌ Erreur : " + e.getMessage());
-        }
+            } catch (Exception e) {
+                System.out.println("❌ Erreur : " + e.getMessage());
+                System.out.print("Reessayer ? (Oui/Non) ");
+                String choix = scanner.nextLine();
+                continuer = choix.equalsIgnoreCase("Oui");
+            }
+        } while (continuer);
     }
 
     private static void rechercherClient() {
-        System.out.print("Identifiant du client : ");
+        boolean continuer = true;
+        do {
+            continuer = false;
+            System.out.print("Identifiant du client : ");
+            String identifiant = scanner.nextLine();
+
+            Optional<Client> client = service.rechercherClient(identifiant);
+            if (client.isPresent()) {
+                System.out.println("✅ Client trouvé :");
+                afficherClient(client.get());
+            } else {
+                System.out.println("❌ Client non trouvé.");
+                System.out.print("Reessayer ? (Oui/Non) ");
+                String choix = scanner.nextLine();
+                continuer = choix.equalsIgnoreCase("Oui");
+            }
+        } while (continuer);
+    }
+
+    private static void afficherClient(Client client) {
+        System.out.println("Nom : " + client.getNom() + " " + client.getPrenom());
+        System.out.println("Adresse : " + client.getAdresse() + ", " +
+                client.getCodePostal() + " " + client.getVille());
+        System.out.println("Téléphone : " + client.getNumTelephone());
+        System.out.println("Email : " + client.getEmail());
+        System.out.println("Numéro SS : " + client.getNumeroSecuriteSocial());
+    }
+
+    private static void modifierClient() {
+        System.out.println("Identifiant du client a modifier :");
         String identifiant = scanner.nextLine();
 
-        Optional<Client> client = service.rechercherClient(identifiant);
-        if (client.isPresent()) {
-            System.out.println("✅ Client trouvé :");
-            afficherClient(client.get());
-        } else {
+        Optional<Client> clientOpt = service.rechercherClient(identifiant);
+        if (clientOpt.isEmpty()) {
             System.out.println("❌ Client non trouvé.");
+            return;
         }
+        Client client = clientOpt.get();
+        boolean continuer = true;
+
+        while (continuer) {
+            System.out.println("\n--- Modifier le client : " + client.getNom() + " " + client.getPrenom());
+            System.out.println("1. Nom (" + client.getNom() + ")");
+            System.out.println("2. Prenom (" + client.getPrenom() + ")");
+            System.out.println("3. Adresse (" + client.getAdresse() + ")");
+            System.out.println("4. Téléphone  (" + client.getNumTelephone() + ")");
+            System.out.println("5. Email (" + client.getEmail() + ")");
+            System.out.println("6. Identifiant (" + client.getIdentifiant() + ")");
+            System.out.println("0. Terminer la modification");
+            System.out.println("Que souhaitez-vous modifier (0-6) : ");
+
+            int choix = lireEntier();
+            scanner.nextLine();
+
+            switch (choix) {
+                case 1:
+                    System.out.println("Nouveau nom : ");
+                    client.setNom(scanner.nextLine());
+                    break;
+                case 2:
+                    System.out.println("Nouveau prenom : ");
+                    client.setPrenom(scanner.nextLine());
+                    break;
+                case 3:
+                    System.out.println("Nouvelle adresse : ");
+                    client.setAdresse(scanner.nextLine());
+                    System.out.println("Code postal : ");
+                    client.setCodePostal(scanner.nextLine());
+                    System.out.println("Ville : ");
+                    client.setVille(scanner.nextLine());
+                    break;
+                case 4:
+                    System.out.println("Nouveau numero de telephone : ");
+                    client.setNumTelephone(scanner.nextLine());
+                    break;
+                case 5:
+                    System.out.println("Nouvel email : ");
+                    client.setEmail(scanner.nextLine());
+                    break;
+                case 6:
+                    System.out.println("Nouvel identifiant : ");
+                    client.setIdentifiant(scanner.nextLine());
+                    break;
+                case 0:
+                    continuer = false;
+                    break;
+                default:
+                    System.out.println("❌ Choix invalide.");
+            }
+        }
+        service.modifierClient(client);
+        System.out.println("✅ Médecin modifié avec succès !");
     }
 
     private static void afficherInventaire() {
@@ -215,7 +323,13 @@ public class ConsoleApp {
                 continue;
             }
 
-            Medicament medicament = inventaire.get(nomMed);
+            Medicament medicament = null;
+            for (String nomInventaire : inventaire.keySet()) {
+            if (nomInventaire.equalsIgnoreCase(nomMed)) {
+                medicament = inventaire.get(nomInventaire);
+                break;
+            }
+            }
             if (medicament == null) {
                 System.out.println("❌ Médicament non trouvé.");
                 continue;
@@ -302,11 +416,11 @@ public class ConsoleApp {
             Date peremption = new Date(maintenant.getTime() + 365L * 24 * 60 * 60 * 1000);
 
             // Quelques médicaments d'exemple
-            Medicament doliprane = new Medicament("Doliprane", CategorieMedicament.ANALGESIQUES,
+            Medicament doliprane = new Medicament("DOLIPRANE", CategorieMedicament.ANALGESIQUES,
                     5.99, 100, maintenant, peremption);
-            Medicament aspirine = new Medicament("Aspirine", CategorieMedicament.ANALGESIQUES,
+            Medicament aspirine = new Medicament("ASPIRINE", CategorieMedicament.ANALGESIQUES,
                     3.50, 75, maintenant, peremption);
-            Medicament amoxicilline = new Medicament("Amoxicilline", CategorieMedicament.ANTIBIOTIQUES,
+            Medicament amoxicilline = new Medicament("AMOXICILLINE", CategorieMedicament.ANTIBIOTIQUES,
                     12.99, 50, maintenant, peremption);
 
             inventaire.put("Doliprane", doliprane);
@@ -326,14 +440,6 @@ public class ConsoleApp {
         }
     }
 
-    private static void afficherClient(Client client) {
-        System.out.println("Nom : " + client.getNom() + " " + client.getPrenom());
-        System.out.println("Adresse : " + client.getAdresse() + ", " +
-                client.getCodePostal() + " " + client.getVille());
-        System.out.println("Téléphone : " + client.getNumTelephone());
-        System.out.println("Email : " + client.getEmail());
-        System.out.println("Numéro SS : " + client.getNumeroSecuriteSocial());
-    }
 
     private static int lireEntier() {
         try {
@@ -508,9 +614,9 @@ public class ConsoleApp {
         System.out.println("\n--- Ajouter un medicament ---");
         try {
             System.out.print("Nom : ");
-            String nom = scanner.nextLine();
+            String nom = scanner.nextLine().toUpperCase(Locale.ROOT);
             System.out.print("Categorie (ANALGESIQUES/ANTIBIOTIQUES/...)");
-            CategorieMedicament categorie = CategorieMedicament.valueOf(scanner.nextLine());
+            CategorieMedicament categorie = CategorieMedicament.valueOf(scanner.nextLine().toUpperCase(Locale.ROOT));
             System.out.print("Prix : ");
             double prix = Double.parseDouble(scanner.nextLine());
             System.out.print("Quantite en stock : ");
@@ -542,9 +648,9 @@ public class ConsoleApp {
 
     private static void rechercherMedicament() {
         System.out.println("Nom du medicament : ");
-        String nom = scanner.nextLine();
+        String nom = scanner.nextLine().toUpperCase(Locale.ROOT);
         Medicament medicament = inventaire.get(nom);
-        if (medicament == null) {
+        if (medicament != null) {
             System.out.println("Medicament trouve : ");
             System.out.printf("%-20s %-15s %-10.2f€ %-10d%n",
                     medicament.getNom(),
