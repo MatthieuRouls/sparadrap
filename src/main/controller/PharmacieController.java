@@ -9,7 +9,6 @@ import main.model.Personne.CategoriePersonne.Medecin;
 import main.model.Personne.CategoriePersonne.Pharmacien;
 import main.model.Transaction.TypeTransaction.Achat;
 import main.model.service.GestPharmacieService;
-import main.model.security.SecurityValidator;
 
 import java.util.*;
 
@@ -34,7 +33,11 @@ public class PharmacieController {
 
     // =================== GESTION DES CLIENTS ===================
     public int getNombreClients() {
-        return clients != null ? clients.size() : 0;
+        try {
+            return service.getNombreClients();
+        } catch (Exception e) {
+            return clients != null ? clients.size() : 0;
+        }
     }
 
     public String ajouterClient(String nom, String prenom, String adresse, String codePostal,
@@ -51,12 +54,35 @@ public class PharmacieController {
         }
     }
 
+    // Surcharge: génère automatiquement l'identifiant
+    public String ajouterClient(String nom, String prenom, String adresse, String codePostal,
+                                String ville, String telephone, String email, String numeroSecu) {
+        try {
+            String identifiantGenere = service.generateClientIdentifiant(prenom, nom);
+            Client client = new Client(nom, prenom, adresse, codePostal, ville,
+                    telephone, email, identifiantGenere, numeroSecu, null, null);
+            service.ajouterClient(client);
+            clients.add(client);
+            return "Client ajouté avec succès";
+        } catch (Exception e) {
+            return "Erreur : " + e.getMessage();
+        }
+    }
+
     public Optional<Client> rechercherClient(String identifiant) {
         try {
             return service.rechercherClient(identifiant);
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public Collection<Client> getTousClients() {
+        return service.getTousClients();
+    }
+
+    public String generateClientIdentifiant(String prenom, String nom) {
+        return service.generateClientIdentifiant(prenom, nom);
     }
 
     public String modifierClient(Client client) {
@@ -71,7 +97,12 @@ public class PharmacieController {
     public String supprimerClient(String identifiant) {
         try {
             boolean supprime = service.supprimerClient(identifiant);
-            return supprime ? "Client supprimé avec succès" : "Client non trouvé";
+            if (supprime) {
+                // Garder la liste locale synchronisée avec le service
+                clients.removeIf(c -> identifiant.equals(c.getIdentifiant()));
+                return "Client supprimé avec succès";
+            }
+            return "Client non trouvé";
         } catch (Exception e) {
             return "Erreur : " + e.getMessage();
         }
@@ -92,12 +123,29 @@ public class PharmacieController {
         }
     }
 
+    // Surcharge simplifiée: identifiant = RPPS
+    public String ajouterMedecin(String nom, String prenom, String adresse, String codePostal,
+                                 String ville, String telephone, String email, String numeroRPPS) {
+        try {
+            Medecin medecin = new Medecin(nom, prenom, adresse, codePostal, ville,
+                    telephone, email, numeroRPPS, numeroRPPS);
+            service.ajouterMedecin(medecin);
+            return "Médecin ajouté avec succès";
+        } catch (Exception e) {
+            return "Erreur : " + e.getMessage();
+        }
+    }
+
     public Optional<Medecin> rechercherMedecin(String identifiant) {
         try {
             return service.rechercherMedecin(identifiant);
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public Collection<Medecin> getTousMedecins() {
+        return service.getTousMedecins();
     }
 
     public String modifierMedecin(Medecin medecin) {
@@ -295,7 +343,7 @@ public class PharmacieController {
         try {
             double chiffreAffaires = service.calculerChiffreAffaires(debut, fin);
             double montantRembourse = service.calculerMontantRembourse(debut, fin);
-            List<Achat> achats = service.getAchatsParPeriode(debut, fin);
+            int nombreVentes = service.getNombreVentesParPeriode(debut, fin);
 
             int stockTotal = inventaire.values().stream()
                     .mapToInt(Medicament::getQuantiteStock)
@@ -307,7 +355,7 @@ public class PharmacieController {
 
             stats.put("chiffreAffaires", chiffreAffaires);
             stats.put("montantRembourse", montantRembourse);
-            stats.put("nombreVentes", achats.size());
+            stats.put("nombreVentes", nombreVentes);
             stats.put("stockTotal", stockTotal);
             stats.put("ruptureStock", ruptureStock);
             stats.put("beneficeNet", chiffreAffaires - montantRembourse);
@@ -371,9 +419,9 @@ public class PharmacieController {
             ajouterClient("Martin", "Pierre", "12 Rue de Paris", "75000", "Paris",
                     "0123456789", "pierre.martin@email.com", "CL001", "123456789012345");
 
-            // Médecin de démonstration
+            // Médecin de démonstration (identifiant = RPPS)
             ajouterMedecin("Dupont", "Marie", "15 Avenue des Médecins", "75001", "Paris",
-                    "0123456790", "marie.dupont@hopital.fr", "MED001", "12345678901");
+                    "0123456790", "marie.dupont@hopital.fr", "12345678901");
 
             // Mutuelle de démonstration
             ajouterMutuelle("Mutuelle Santé Plus", "75000", "Paris", "0123456800", 70.0);

@@ -36,6 +36,7 @@ public class ClientPanel extends JPanel {
     // Formulaire
     private JTextField nomField, prenomField, adresseField, codePostalField;
     private JTextField villeField, telephoneField, emailField, identifiantField, numeroSecuField;
+    private boolean editingClient = false;
 
     public ClientPanel(PharmacieController controller, PharmacieMainFrame mainFrame) {
         this.controller = controller;
@@ -128,6 +129,9 @@ public class ClientPanel extends JPanel {
         buttonsPanel.add(ajouterBtn);
         buttonsPanel.add(modifierBtn);
         buttonsPanel.add(supprimerBtn);
+        JButton afficherTousBtn = createStyledButton("icons/search.png","Afficher tous", PRIMARY_COLOR);
+        afficherTousBtn.addActionListener(e -> rechargerTousClients());
+        buttonsPanel.add(afficherTousBtn);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBackground(BACKGROUND_COLOR);
@@ -323,6 +327,14 @@ public class ClientPanel extends JPanel {
         }
     }
 
+    private void rechargerTousClients() {
+        tableModel.setRowCount(0);
+        for (Client c : controller.getTousClients()) {
+            ajouterClientATable(c);
+        }
+        afficherMessage("Liste des clients chargée", false);
+    }
+
     private void ajouterClientATable(Client client) {
         Object[] row = {
                 client.getIdentifiant(),
@@ -374,7 +386,30 @@ public class ClientPanel extends JPanel {
 
     private void nouveauClient() {
         viderFormulaire();
-        identifiantField.setEnabled(true);
+        identifiantField.setEnabled(false);
+        // Générer l'identifiant à partir du prénom/nom (si déjà saisis)
+        identifiantField.setText("");
+        prenomField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            private void majId() {
+                String id = mainFrame != null ? mainFrame.getController().generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim())
+                        : controller.generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim());
+                identifiantField.setText(id);
+            }
+        });
+        nomField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { majId(); }
+            private void majId() {
+                String id = mainFrame != null ? mainFrame.getController().generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim())
+                        : controller.generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim());
+                identifiantField.setText(id);
+            }
+        });
+        editingClient = false;
     }
 
     private void modifierClient() {
@@ -384,12 +419,13 @@ public class ClientPanel extends JPanel {
             return;
         }
         identifiantField.setEnabled(false);
+        editingClient = true;
     }
 
     private void sauvegarderClient() {
         try {
             String resultat;
-            boolean isModification = !identifiantField.isEnabled();
+            boolean isModification = editingClient;
 
             if (isModification) {
                 // Modification d'un client existant
@@ -417,7 +453,14 @@ public class ClientPanel extends JPanel {
                     resultat = "Erreur : Client non trouvé";
                 }
             } else {
-                // Nouveau client
+                // Nouveau client - utiliser l'identifiant généré dans le champ
+                String identifiantGenere = identifiantField.getText().trim();
+                if (identifiantGenere.isEmpty()) {
+                    // fallback si pas encore généré
+                    identifiantGenere = (mainFrame != null ? mainFrame.getController() : controller)
+                            .generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim());
+                    identifiantField.setText(identifiantGenere);
+                }
                 resultat = controller.ajouterClient(
                         nomField.getText().trim(),
                         prenomField.getText().trim(),
@@ -426,13 +469,15 @@ public class ClientPanel extends JPanel {
                         villeField.getText().trim(),
                         telephoneField.getText().trim(),
                         emailField.getText().trim(),
-                        identifiantField.getText().trim(),
+                        identifiantGenere,
                         numeroSecuField.getText().trim()
                 );
 
-                // NOUVEAU : Déclencher l'événement d'ajout
                 if (!resultat.contains("Erreur")) {
                     DataEventManager.ClientEvents.clientAdded();
+                    // Ajouter à la table immédiatement
+                    Optional<Client> created = controller.rechercherClient(identifiantGenere);
+                    created.ifPresent(this::ajouterClientATable);
                 }
             }
 
@@ -440,7 +485,8 @@ public class ClientPanel extends JPanel {
             afficherMessage(resultat, isError);
             if (!isError) {
                 viderFormulaire();
-                identifiantField.setEnabled(true);
+                identifiantField.setEnabled(false);
+                editingClient = false;
             }
         } catch (Exception e) {
             afficherMessage("Erreur : " + e.getMessage(), true);
@@ -449,8 +495,9 @@ public class ClientPanel extends JPanel {
 
     private void annulerSaisie() {
         viderFormulaire();
-        identifiantField.setEnabled(true);
+        identifiantField.setEnabled(false);
         clientsTable.clearSelection();
+        editingClient = false;
     }
 
     private void supprimerClient() {

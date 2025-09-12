@@ -94,6 +94,13 @@ public class VentePanel extends JPanel {
         private JTable panierTable;
         private DefaultTableModel panierModel;
         private JLabel totalLabel;
+        private JButton rechercherClientBtn;
+        private JLabel clientInfoLabel;
+        private JButton ajouterBtn;
+        private JButton retirerBtn;
+        private JButton viderBtn;
+        private JButton validerBtn;
+        private JButton annulerBtn;
 
         private Map<Medicament, Integer> panier = new HashMap<>();
         private Client clientSelectionne;
@@ -165,10 +172,10 @@ public class VentePanel extends JPanel {
             panel.add(new JLabel("ID Client:"));
             panel.add(clientIdField);
 
-            JButton rechercherClientBtn = createStyledButton("Rechercher", SECONDARY_COLOR);
+            rechercherClientBtn = createStyledButton("Rechercher", SECONDARY_COLOR);
             panel.add(rechercherClientBtn);
 
-            JLabel clientInfoLabel = new JLabel("Aucun client sélectionné");
+            clientInfoLabel = new JLabel("Aucun client sélectionné");
             clientInfoLabel.setForeground(Color.GRAY);
             panel.add(clientInfoLabel);
 
@@ -184,7 +191,7 @@ public class VentePanel extends JPanel {
             panel.add(new JLabel("Quantité:"));
             panel.add(quantiteSpinner);
 
-            JButton ajouterBtn = createStyledButton("Ajouter", PRIMARY_COLOR);
+            ajouterBtn = createStyledButton("Ajouter", PRIMARY_COLOR);
             panel.add(ajouterBtn);
 
             return panel;
@@ -207,8 +214,8 @@ public class VentePanel extends JPanel {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             buttonPanel.setBackground(Color.WHITE);
-            JButton retirerBtn = createStyledButton("Retirer sélection", ERROR_COLOR);
-            JButton viderBtn = createStyledButton("Vider panier", ERROR_COLOR);
+            retirerBtn = createStyledButton("Retirer sélection", ERROR_COLOR);
+            viderBtn = createStyledButton("Vider panier", ERROR_COLOR);
             buttonPanel.add(retirerBtn);
             buttonPanel.add(viderBtn);
 
@@ -224,11 +231,11 @@ public class VentePanel extends JPanel {
             panel.setBackground(BACKGROUND_COLOR);
             panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-            JButton validerBtn = createStyledButton("💳 Valider la vente", SUCCESS_COLOR);
+            validerBtn = createStyledButton("💳 Valider la vente", SUCCESS_COLOR);
             validerBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
             validerBtn.setPreferredSize(new Dimension(200, 40));
 
-            JButton annulerBtn = createStyledButton("❌ Annuler", ERROR_COLOR);
+            annulerBtn = createStyledButton("❌ Annuler", ERROR_COLOR);
             annulerBtn.setPreferredSize(new Dimension(120, 40));
 
             panel.add(validerBtn);
@@ -239,8 +246,160 @@ public class VentePanel extends JPanel {
         }
 
         private void setupEventListeners() {
-            // Implémentation des listeners pour la vente directe
-            // À compléter avec la logique métier
+            // Recherche client
+            rechercherClientBtn.addActionListener(e -> {
+                String id = clientIdField.getText().trim();
+                if (id.isEmpty()) {
+                    afficherMessage("Veuillez saisir l'identifiant client", true);
+                    return;
+                }
+                Optional<Client> clientOpt = controller.rechercherClient(id);
+                if (clientOpt.isPresent()) {
+                    clientSelectionne = clientOpt.get();
+                    clientInfoLabel.setText(clientSelectionne.getNom() + " " + clientSelectionne.getPrenom());
+                    clientInfoLabel.setForeground(PRIMARY_COLOR);
+                    afficherMessage("Client sélectionné", false);
+                } else {
+                    clientSelectionne = null;
+                    clientInfoLabel.setText("Client introuvable");
+                    clientInfoLabel.setForeground(ERROR_COLOR);
+                    afficherMessage("Client non trouvé", true);
+                }
+            });
+
+            // Ajouter médicament au panier
+            ajouterBtn.addActionListener(e -> {
+                String nomMed = medicamentField.getText().trim();
+                int quantite = (Integer) quantiteSpinner.getValue();
+                if (nomMed.isEmpty()) {
+                    afficherMessage("Saisissez un médicament", true);
+                    return;
+                }
+                Optional<Medicament> medOpt = controller.rechercherMedicament(nomMed);
+                if (medOpt.isEmpty()) {
+                    afficherMessage("Médicament introuvable", true);
+                    return;
+                }
+                Medicament medicament = medOpt.get();
+                // Vérifier disponibilité
+                int deja = panier.getOrDefault(medicament, 0);
+                int demande = deja + quantite;
+                if (!medicament.isDisponible(demande)) {
+                    afficherMessage("Stock insuffisant (disponible: " + medicament.getQuantiteStock() + ")", true);
+                    return;
+                }
+                panier.put(medicament, demande);
+                rafraichirPanierTable();
+                mettreAJourTotal();
+                medicamentField.setText("");
+                quantiteSpinner.setValue(1);
+            });
+
+            // Retirer sélection
+            retirerBtn.addActionListener(e -> {
+                int row = panierTable.getSelectedRow();
+                if (row < 0) {
+                    afficherMessage("Sélectionnez un article à retirer", true);
+                    return;
+                }
+                String nom = (String) panierModel.getValueAt(row, 0);
+                // Trouver l'objet Medicament par nom dans le panier
+                Medicament toRemove = null;
+                for (Medicament m : panier.keySet()) {
+                    if (m.getNom().equalsIgnoreCase(nom)) { toRemove = m; break; }
+                }
+                if (toRemove != null) {
+                    panier.remove(toRemove);
+                    rafraichirPanierTable();
+                    mettreAJourTotal();
+                }
+            });
+
+            // Vider panier
+            viderBtn.addActionListener(e -> {
+                panier.clear();
+                rafraichirPanierTable();
+                mettreAJourTotal();
+            });
+
+            // Valider vente
+            validerBtn.addActionListener(e -> {
+                if (clientSelectionne == null) {
+                    afficherMessage("Sélectionnez un client", true);
+                    return;
+                }
+                if (panier.isEmpty()) {
+                    afficherMessage("Le panier est vide", true);
+                    return;
+                }
+                // Construire map nom -> quantite
+                Map<String, Integer> medicamentsQuantites = new HashMap<>();
+                for (Map.Entry<Medicament, Integer> entry : panier.entrySet()) {
+                    medicamentsQuantites.put(entry.getKey().getNom(), entry.getValue());
+                }
+                String resultat = controller.effectuerVenteDirecte(clientSelectionne.getIdentifiant(), medicamentsQuantites);
+                boolean isError = resultat.toLowerCase().contains("erreur") || resultat.toLowerCase().contains("insuffisant");
+                afficherMessage(resultat, isError);
+                if (!isError) {
+                    // Mettre à jour les compteurs via événements
+                    try {
+                        Calendar cal = Calendar.getInstance();
+                        cal.set(Calendar.HOUR_OF_DAY, 0);
+                        cal.set(Calendar.MINUTE, 0);
+                        cal.set(Calendar.SECOND, 0);
+                        cal.set(Calendar.MILLISECOND, 0);
+                        Date debutJour = cal.getTime();
+                        Date maintenant = new Date();
+
+                        Map<String, Object> statsJour = controller.obtenirStatistiques(debutJour, maintenant);
+                        int nbVentes = (Integer) statsJour.getOrDefault("nombreVentes", 0);
+                        double ca = (Double) statsJour.getOrDefault("chiffreAffaires", 0.0);
+                        String caStr = String.format("%.2f €", ca);
+                        DataEventManager.VenteEvents.venteCompleted(nbVentes, caStr);
+                    } catch (Exception ex) {
+                        // Ignorer les erreurs d'actualisation d'UI
+                    }
+                    // Rafraîchir stock
+                    DataEventManager.MedicamentEvents.stockUpdated();
+                    // Forcer aussi l'accueil à rafraîchir le stock immédiatement
+                    DataEventManager.getInstance().fireEvent(DataEventManager.EventType.STOCK_UPDATED);
+                    // Reset UI
+                    panier.clear();
+                    rafraichirPanierTable();
+                    mettreAJourTotal();
+                }
+            });
+
+            // Annuler
+            annulerBtn.addActionListener(e -> {
+                clientSelectionne = null;
+                clientInfoLabel.setText("Aucun client sélectionné");
+                clientInfoLabel.setForeground(Color.GRAY);
+                clientIdField.setText("");
+                panier.clear();
+                rafraichirPanierTable();
+                mettreAJourTotal();
+                medicamentField.setText("");
+                quantiteSpinner.setValue(1);
+            });
+        }
+
+        private void rafraichirPanierTable() {
+            panierModel.setRowCount(0);
+            for (Map.Entry<Medicament, Integer> entry : panier.entrySet()) {
+                Medicament m = entry.getKey();
+                int qte = entry.getValue();
+                double sousTotal = m.getPrix() * qte;
+                panierModel.addRow(new Object[]{m.getNom(), String.format("%.2f €", m.getPrix()), qte, String.format("%.2f €", sousTotal)});
+            }
+        }
+
+        private void mettreAJourTotal() {
+            double total = 0.0;
+            for (Map.Entry<Medicament, Integer> entry : panier.entrySet()) {
+                total += entry.getKey().getPrix() * entry.getValue();
+            }
+            totalLabel.setText(String.format("Total: %.2f €", total));
         }
     }
 

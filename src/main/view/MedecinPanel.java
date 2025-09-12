@@ -124,6 +124,9 @@ public class MedecinPanel extends JPanel {
         buttonsPanel.add(ajouterBtn);
         buttonsPanel.add(modifierBtn);
         buttonsPanel.add(supprimerBtn);
+        JButton afficherTousBtn = createStyledButton("icons/search.png", "Afficher tous", PRIMARY_COLOR);
+        afficherTousBtn.addActionListener(e -> rechargerTousMedecins());
+        buttonsPanel.add(afficherTousBtn);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBackground(BACKGROUND_COLOR);
@@ -166,7 +169,7 @@ public class MedecinPanel extends JPanel {
 
         // Ligne 2
         addFormField(formPanel, gbc, "N° RPPS :", numeroRPPSField, 2);
-        addFormField(formPanel, gbc, "Identifiant :", identifiantField, 3);
+        // Ne plus afficher de champ identifiant séparé
 
         // Ligne 3
         addFormField(formPanel, gbc, "Tél :", telephoneField, 4);
@@ -308,6 +311,14 @@ public class MedecinPanel extends JPanel {
         }
     }
 
+    private void rechargerTousMedecins() {
+        tableModel.setRowCount(0);
+        for (Medecin m : controller.getTousMedecins()) {
+            ajouterMedecinATable(m);
+        }
+        afficherMessage("Liste des médecins chargée", false);
+    }
+
     private void ajouterMedecinATable(Medecin medecin) {
         Object[] row = {
                 medecin.getNumeroRPPS(),
@@ -360,7 +371,7 @@ public class MedecinPanel extends JPanel {
     private void nouveauMedecin() {
         viderFormulaire();
         numeroRPPSField.setEnabled(true);
-        identifiantField.setEnabled(true);
+        identifiantField.setEnabled(false);
     }
 
     private void modifierMedecin() {
@@ -385,6 +396,11 @@ public class MedecinPanel extends JPanel {
 
                 if (medecinOpt.isPresent()) {
                     Medecin medecin = medecinOpt.get();
+                    // Validation des champs
+                    if (!validerChamps()) {
+                        afficherMessage("Veuillez corriger les erreurs en rouge", true);
+                        return;
+                    }
                     // Mise à jour des champs
                     medecin.setNom(nomField.getText().trim());
                     medecin.setPrenom(prenomField.getText().trim());
@@ -393,7 +409,8 @@ public class MedecinPanel extends JPanel {
                     medecin.setVille(villeField.getText().trim());
                     medecin.setNumTelephone(telephoneField.getText().trim());
                     medecin.setEmail(emailField.getText().trim());
-                    medecin.setIdentifiant(identifiantField.getText().trim());
+                    // Identifiant = RPPS
+                    medecin.setIdentifiant(numeroRPPS);
 
                     resultat = controller.modifierMedecin(medecin);
                 } else {
@@ -401,6 +418,11 @@ public class MedecinPanel extends JPanel {
                 }
             } else {
                 // Nouveau médecin
+                if (!validerChamps()) {
+                    afficherMessage("Veuillez corriger les erreurs en rouge", true);
+                    return;
+                }
+                String rpps = numeroRPPSField.getText().trim();
                 resultat = controller.ajouterMedecin(
                         nomField.getText().trim(),
                         prenomField.getText().trim(),
@@ -409,9 +431,18 @@ public class MedecinPanel extends JPanel {
                         villeField.getText().trim(),
                         telephoneField.getText().trim(),
                         emailField.getText().trim(),
-                        numeroRPPSField.getText().trim(),
-                        identifiantField.getText().trim()
+                        rpps, // identifiant = RPPS
+                        rpps  // numeroRPPS
                 );
+                // Si succès, ajouter à la table
+                if (!resultat.contains("Erreur")) {
+                    Optional<Medecin> medecinCree = controller.rechercherMedecin(rpps);
+                    medecinCree.ifPresent(this::ajouterMedecinATable);
+                    // Émettre un événement pour MAJ tableau de bord si nécessaire
+                    try {
+                        DataEventManager.getInstance().fireEvent(DataEventManager.EventType.MEDECIN_ADDED);
+                    } catch (Exception ignored) {}
+                }
             }
 
             boolean isError = resultat.contains("Erreur");
@@ -419,7 +450,17 @@ public class MedecinPanel extends JPanel {
             if (!isError) {
                 viderFormulaire();
                 numeroRPPSField.setEnabled(true);
-                identifiantField.setEnabled(true);
+                identifiantField.setEnabled(false);
+                // Nettoyer styles d'erreur
+                clearFieldError(nomField);
+                clearFieldError(prenomField);
+                clearFieldError(adresseField);
+                clearFieldError(codePostalField);
+                clearFieldError(villeField);
+                clearFieldError(telephoneField);
+                clearFieldError(emailField);
+                clearFieldError(numeroRPPSField);
+                clearFieldError(identifiantField);
             }
         } catch (Exception e) {
             afficherMessage("Erreur : " + e.getMessage(), true);
@@ -469,5 +510,58 @@ public class MedecinPanel extends JPanel {
         if (parent instanceof PharmacieMainFrame) {
             ((PharmacieMainFrame) parent).showMessage(message, isError);
         }
+    }
+
+    // ================= Validation et styles d'erreur =================
+
+    private boolean validerChamps() {
+        boolean ok = true;
+        // Réinitialiser
+        clearFieldError(nomField);
+        clearFieldError(prenomField);
+        clearFieldError(adresseField);
+        clearFieldError(codePostalField);
+        clearFieldError(villeField);
+        clearFieldError(telephoneField);
+        clearFieldError(emailField);
+        clearFieldError(numeroRPPSField);
+        clearFieldError(identifiantField);
+
+        if (nomField.getText().trim().isEmpty()) { setFieldError(nomField, "Nom requis"); ok = false; }
+        if (prenomField.getText().trim().isEmpty()) { setFieldError(prenomField, "Prénom requis"); ok = false; }
+        if (numeroRPPSField.getText().trim().isEmpty()) { setFieldError(numeroRPPSField, "Numéro RPPS requis"); ok = false; }
+        else if (!numeroRPPSField.getText().trim().matches("\\d{9,15}")) { setFieldError(numeroRPPSField, "RPPS invalide (9-15 chiffres)"); ok = false; }
+
+        // Identifiant = RPPS, pas de saisie nécessaire
+        if (codePostalField.getText().trim().isEmpty()) { setFieldError(codePostalField, "Code postal requis"); ok = false; }
+        else if (!codePostalField.getText().trim().matches("\\d{4,6}")) { setFieldError(codePostalField, "Code postal invalide"); ok = false; }
+
+        if (villeField.getText().trim().isEmpty()) { setFieldError(villeField, "Ville requise"); ok = false; }
+        if (telephoneField.getText().trim().isEmpty()) { setFieldError(telephoneField, "Téléphone requis"); ok = false; }
+        else if (!telephoneField.getText().trim().matches("[\\d +().-]{6,}")) { setFieldError(telephoneField, "Téléphone invalide"); ok = false; }
+
+        if (emailField.getText().trim().isEmpty()) { setFieldError(emailField, "Email requis"); ok = false; }
+        else if (!emailField.getText().trim().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) { setFieldError(emailField, "Email invalide"); ok = false; }
+
+        // L'adresse peut être vide, mais si remplie, on tronque espaces
+        adresseField.setText(adresseField.getText().trim());
+
+        return ok;
+    }
+
+    private void setFieldError(JTextField field, String message) {
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.RED, 2),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        field.setToolTipText(message);
+    }
+
+    private void clearFieldError(JTextField field) {
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(5, 8, 5, 8)
+        ));
+        field.setToolTipText(null);
     }
 }

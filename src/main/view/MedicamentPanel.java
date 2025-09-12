@@ -16,7 +16,7 @@ import java.util.Optional;
 /**
  * Panel de gestion des médicaments
  */
-public class MedicamentPanel extends JPanel {
+public class MedicamentPanel extends JPanel implements DataRefreshListener {
     private final PharmacieController controller;
 
     // Couleurs du thème
@@ -49,6 +49,8 @@ public class MedicamentPanel extends JPanel {
         setupEventListeners();
         setupStyles();
         chargerInventaire();
+        // Écouter les mises à jour de stock déclenchées par les ventes
+        DataEventManager.getInstance().addListener(this);
     }
 
     private void initializeComponents() {
@@ -93,7 +95,10 @@ public class MedicamentPanel extends JPanel {
         stockField = createStyledTextField();
         categorieCombo = new JComboBox<>(CategorieMedicament.values());
 
-        datePeremptionField = new JFormattedTextField(new SimpleDateFormat("dd/MM/yyyy"));
+        // Utiliser un DateFormatter pour que setValue accepte un java.util.Date
+        datePeremptionField = new JFormattedTextField();
+        javax.swing.text.DateFormatter dateFormatter = new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("dd/MM/yyyy"));
+        datePeremptionField.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(dateFormatter));
         datePeremptionField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         datePeremptionField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
@@ -415,8 +420,7 @@ public class MedicamentPanel extends JPanel {
         prixField.setText(String.valueOf(medicament.getPrix()));
         stockField.setText(String.valueOf(medicament.getQuantiteStock()));
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-        datePeremptionField.setValue(dateFormat.format(medicament.getDatePeremption()));
+        datePeremptionField.setValue(medicament.getDatePeremption());
     }
 
     private void viderFormulaire() {
@@ -475,9 +479,8 @@ public class MedicamentPanel extends JPanel {
             if (!isError) {
                 viderFormulaire();
                 chargerInventaire();
-                if (mainFrame != null) {
-                    mainFrame.refreshStockCount();
-                }
+                // Notifier l'accueil et autres listeners du stock
+                DataEventManager.MedicamentEvents.stockUpdated();
             }
         } catch (Exception e) {
             afficherMessage("Erreur : " + e.getMessage(), true);
@@ -510,6 +513,8 @@ public class MedicamentPanel extends JPanel {
 
                 if (!isError) {
                     chargerInventaire();
+                    // Notifier l'accueil et autres listeners du stock
+                    DataEventManager.MedicamentEvents.stockUpdated();
                 }
             } catch (NumberFormatException e) {
                 afficherMessage("Stock invalide", true);
@@ -529,4 +534,22 @@ public class MedicamentPanel extends JPanel {
             ((PharmacieMainFrame) parent).showMessage(message, isError);
         }
     }
+
+    // ================= DataRefreshListener =================
+    @Override
+    public void refreshClientCount() { /* sans objet ici */ }
+
+    @Override
+    public void refreshMedecinCount() { /* sans objet ici */ }
+
+    @Override
+    public void refreshStockCount() {
+        SwingUtilities.invokeLater(this::chargerInventaire);
+    }
+
+    @Override
+    public void refreshVenteCount(int nombreVentes) { /* sans objet ici */ }
+
+    @Override
+    public void refreshCaCount(String caValue) { /* sans objet ici */ }
 }

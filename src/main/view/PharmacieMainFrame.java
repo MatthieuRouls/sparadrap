@@ -59,7 +59,7 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(1000, 600));
 
-        DataEventManager.getInstance().addListener(this);
+        // Listener déjà ajouté plus haut
     }
 
     private PharmacieMainFrame mainFrame;
@@ -126,7 +126,7 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
         statusPanel.setBackground(SIDEBAR_COLOR);
         statusPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
-        JLabel statusLabel = new JLabel("Prêt");
+        // Utiliser le champ d'instance statusLabel (éviter l'ombre locale)
         statusLabel.setFont(new Font("San Francisco", Font.PLAIN, 12));
         statusLabel.setForeground(Color.GRAY);
 
@@ -248,7 +248,7 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
 
         // Card - Ventes du jour
         JLabel[] venteLabelHolder = new JLabel[1];
-        JPanel venteCard = createStatsCard("icons/achats.png", "Ventes du jour", "15", "ventes", venteLabelHolder);
+        JPanel venteCard = createStatsCard("icons/achats.png", "Ventes du jour", "0", "ventes", venteLabelHolder);
         venteCountLabel = venteLabelHolder[0];
         cardsPanel.add(venteCard);
 
@@ -266,7 +266,7 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
 
         // Card - Chiffre d'affaires
         JLabel[] caLabelHolder = new JLabel[1];
-        JPanel caCard = createStatsCard("icons/sales.png", "CA du mois", "2,450€", "", caLabelHolder);
+        JPanel caCard = createStatsCard("icons/sales.png", "CA du mois", "0.00 €", "", caLabelHolder);
         caCountLabel = caLabelHolder[0];
         cardsPanel.add(caCard);
 
@@ -291,6 +291,36 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(cardsPanel, BorderLayout.CENTER);
         panel.add(actionsPanel, BorderLayout.SOUTH);
+
+        // Initialiser avec les vraies données à l'instant T
+        try {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+            cal.set(java.util.Calendar.MINUTE, 0);
+            cal.set(java.util.Calendar.SECOND, 0);
+            cal.set(java.util.Calendar.MILLISECOND, 0);
+            java.util.Date debutJour = cal.getTime();
+            java.util.Date maintenant = new java.util.Date();
+
+            // Début du mois
+            cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
+            java.util.Date debutMois = cal.getTime();
+
+            java.util.Map<String, Object> statsJour = controller.obtenirStatistiques(debutJour, maintenant);
+            java.util.Map<String, Object> statsMois = controller.obtenirStatistiques(debutMois, maintenant);
+
+            int nbVentesJour = (Integer) statsJour.getOrDefault("nombreVentes", 0);
+            double caMois = (Double) statsMois.getOrDefault("chiffreAffaires", 0.0);
+
+            if (venteCountLabel != null) {
+                venteCountLabel.setText(String.valueOf(nbVentesJour));
+            }
+            if (caCountLabel != null) {
+                caCountLabel.setText(String.format("%.2f €", caMois));
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, laisser les valeurs par défaut
+        }
 
         return panel;
     }
