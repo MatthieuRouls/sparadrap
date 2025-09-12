@@ -14,7 +14,7 @@ import java.util.Date;
  * Fenêtre principale de l'application Pharmacie Sparadrap
  * Interface Swing moderne et épurée
  */
-public class PharmacieMainFrame extends JFrame {
+public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
     private final PharmacieController controller;
     private JPanel mainPanel;
     private JPanel sidebarPanel;
@@ -46,6 +46,8 @@ public class PharmacieMainFrame extends JFrame {
         setupStyles();
         setupEventListeners();
 
+        DataEventManager.getInstance().addListener(this);
+
         ImageIcon icon = new ImageIcon("icons/cross.png");
         Image iconImage = icon.getImage();
 
@@ -56,6 +58,8 @@ public class PharmacieMainFrame extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(1000, 600));
+
+        DataEventManager.getInstance().addListener(this);
     }
 
     private PharmacieMainFrame mainFrame;
@@ -200,23 +204,21 @@ public class PharmacieMainFrame extends JFrame {
     }
 
     private void setupContentPanels() {
-        // Panel d'accueil
+        // Panel d'accueil (existant)
         JPanel accueilPanel = createAccueilPanel();
-        accueilPanel.setName("accueil");
         contentPanel.add(accueilPanel, "accueil");
 
-        // Panel clients
+        // NOUVEAU : Utiliser les nouveaux panels
         ClientPanel clientPanel = new ClientPanel(controller, this);
         contentPanel.add(clientPanel, "clients");
 
         MedecinPanel medecinPanel = new MedecinPanel(controller);
         contentPanel.add(medecinPanel, "medecins");
 
-        // Panel médicaments
         MedicamentPanel medicamentPanel = new MedicamentPanel(controller, this);
-        medicamentPanel.setName("medicaments");
         contentPanel.add(medicamentPanel, "medicaments");
 
+        // NOUVEAU : Panel de vente complet
         VentePanel ventePanel = new VentePanel(controller);
         contentPanel.add(ventePanel, "ventes");
 
@@ -394,30 +396,67 @@ public class PharmacieMainFrame extends JFrame {
         // Les listeners pour les actions rapides seront ajoutés ici
         // Pour l'instant, nous les laissons vides pour la structure
     }
-
+    @Override
     public void refreshClientCount() {
-        if (clientCountLabel != null) {
-            clientCountLabel.setText(String.valueOf(controller.getNombreClients()));
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (clientCountLabel != null) {
+                try {
+                    int count = controller.getNombreClients();
+                    clientCountLabel.setText(String.valueOf(count));
+                } catch (Exception e) {
+                    System.err.println("Erreur actualisation clients: " + e.getMessage());
+                }
+            }
+        });
     }
+
+    @Override
+    public void refreshMedecinCount() {
+
+    }
+
 
     public void refreshVenteCount(int nombreVentes) {
-        if (venteCountLabel != null) {
-            venteCountLabel.setText(String.valueOf(nombreVentes));
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (venteCountLabel != null) {
+                venteCountLabel.setText(String.valueOf(nombreVentes));
+            }
+        });
     }
 
+    @Override
     public void refreshStockCount() {
-        if (stockCountLabel != null) {
-            stockCountLabel.setText(String.valueOf(controller.getNombreMedicamentsEnStock()));
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (stockCountLabel != null) {
+                try {
+                    int count = controller.getNombreMedicamentsEnStock();
+                    stockCountLabel.setText(String.valueOf(count));
+                } catch (Exception e) {
+                    System.err.println("Erreur actualisation stock: " + e.getMessage());
+                }
+            }
+        });
     }
 
     public void refreshCaCount(String caValue) {
-        if (caCountLabel != null) {
-            caCountLabel.setText(caValue);
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (caCountLabel != null) {
+                caCountLabel.setText(caValue);
+            }
+        });
     }
+
+    @Override
+    public void refreshAllCounts() {
+        DataRefreshListener.super.refreshAllCounts();
+    }
+
+    @Override
+    public void dispose() {
+        DataEventManager.getInstance().removeListener(this);
+        super.dispose();
+    }
+
 
     private void initialiserPharmacienDemo() {
         try {

@@ -398,7 +398,6 @@ public class ClientPanel extends JPanel {
 
                 if (clientOpt.isPresent()) {
                     Client client = clientOpt.get();
-                    // Mise à jour des champs (en utilisant les setters)
                     client.setNom(nomField.getText().trim());
                     client.setPrenom(prenomField.getText().trim());
                     client.setAdresse(adresseField.getText().trim());
@@ -409,6 +408,11 @@ public class ClientPanel extends JPanel {
                     client.setNumeroSecuriteSocial(numeroSecuField.getText().trim());
 
                     resultat = controller.modifierClient(client);
+
+                    // NOUVEAU : Déclencher l'événement de modification
+                    if (!resultat.contains("Erreur")) {
+                        DataEventManager.ClientEvents.clientUpdated();
+                    }
                 } else {
                     resultat = "Erreur : Client non trouvé";
                 }
@@ -425,6 +429,11 @@ public class ClientPanel extends JPanel {
                         identifiantField.getText().trim(),
                         numeroSecuField.getText().trim()
                 );
+
+                // NOUVEAU : Déclencher l'événement d'ajout
+                if (!resultat.contains("Erreur")) {
+                    DataEventManager.ClientEvents.clientAdded();
+                }
             }
 
             boolean isError = resultat.contains("Erreur");
@@ -432,10 +441,6 @@ public class ClientPanel extends JPanel {
             if (!isError) {
                 viderFormulaire();
                 identifiantField.setEnabled(true);
-                // Rafraîchir uniquement le nombre de clients
-                if (mainFrame != null) {
-                    mainFrame.refreshClientCount();
-                }
             }
         } catch (Exception e) {
             afficherMessage("Erreur : " + e.getMessage(), true);
@@ -475,6 +480,8 @@ public class ClientPanel extends JPanel {
             if (!isError) {
                 tableModel.removeRow(selectedRow);
                 viderFormulaire();
+
+                DataEventManager.ClientEvents.clientDeleted();
             }
         }
     }

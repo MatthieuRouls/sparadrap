@@ -2,7 +2,6 @@ package main.view;
 
 import main.controller.PharmacieController;
 import main.model.Personne.CategoriePersonne.Medecin;
-import main.view.PharmacieMainFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,12 +16,12 @@ public class MedecinPanel extends JPanel {
     private final PharmacieController controller;
 
     // Couleurs du thème
-    private static final Color PRIMARY_COLOR = new Color(41, 128, 185);
-    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
-    private static final Color ACCENT_COLOR = new Color(46, 204, 113);
-    private static final Color ERROR_COLOR = new Color(231, 76, 60);
+    private static final Color PRIMARY_COLOR = new Color(0, 62, 28);
+    private static final Color SECONDARY_COLOR = new Color(117, 187, 153);
+    private static final Color ACCENT_COLOR = new Color(217, 243, 228);
+    private static final Color ERROR_COLOR = new Color(187, 45, 12);
     private static final Color BACKGROUND_COLOR = new Color(248, 249, 250);
-    private static final Color TEXT_COLOR = new Color(44, 62, 80);
+    private static final Color TEXT_COLOR = new Color(1, 17, 9);
 
     // Composants
     private JTextField rechercheField;
@@ -33,7 +32,7 @@ public class MedecinPanel extends JPanel {
 
     // Formulaire
     private JTextField nomField, prenomField, adresseField, codePostalField;
-    private JTextField villeField, telephoneField, emailField, identifiantField, numeroRPPSField;
+    private JTextField villeField, telephoneField, emailField, numeroRPPSField, identifiantField;
 
     public MedecinPanel(PharmacieController controller) {
         this.controller = controller;
@@ -50,10 +49,10 @@ public class MedecinPanel extends JPanel {
         // Champ de recherche
         rechercheField = new JTextField(20);
         rechercheField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rechercherBtn = createStyledButton("🔍 Rechercher", SECONDARY_COLOR);
+        rechercherBtn = createStyledButton("icons/search.png", "Rechercher", PRIMARY_COLOR);
 
         // Table des médecins
-        String[] colonnes = {"Identifiant", "Nom", "Prénom", "Ville", "Téléphone", "N° RPPS"};
+        String[] colonnes = {"N° RPPS", "Nom", "Prénom", "Ville", "Téléphone", "Email"};
         tableModel = new DefaultTableModel(colonnes, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -66,9 +65,9 @@ public class MedecinPanel extends JPanel {
         medecinsTable.getTableHeader().setReorderingAllowed(false);
 
         // Boutons d'action
-        ajouterBtn = createStyledButton("➕ Ajouter", ACCENT_COLOR);
-        modifierBtn = createStyledButton("✏️ Modifier", PRIMARY_COLOR);
-        supprimerBtn = createStyledButton("🗑️ Supprimer", ERROR_COLOR);
+        ajouterBtn = createStyledButton("icons/add.png", "Ajouter", PRIMARY_COLOR);
+        modifierBtn = createStyledButton("icons/edit.png", "Modifier", PRIMARY_COLOR);
+        supprimerBtn = createStyledButton("icons/remove.png", "Supprimer", ERROR_COLOR);
 
         // Panel de détails/formulaire
         detailsPanel = new JPanel();
@@ -87,12 +86,12 @@ public class MedecinPanel extends JPanel {
         villeField = createStyledTextField();
         telephoneField = createStyledTextField();
         emailField = createStyledTextField();
-        identifiantField = createStyledTextField();
         numeroRPPSField = createStyledTextField();
+        identifiantField = createStyledTextField();
     }
 
     private void setupLayout() {
-        // Panel du haut
+        // Panel du haut : titre et recherche
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(BACKGROUND_COLOR);
         topPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
@@ -103,14 +102,14 @@ public class MedecinPanel extends JPanel {
 
         JPanel recherchePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         recherchePanel.setBackground(BACKGROUND_COLOR);
-        recherchePanel.add(new JLabel("Rechercher : "));
+        recherchePanel.add(new JLabel("Rechercher (N° RPPS) : "));
         recherchePanel.add(rechercheField);
         recherchePanel.add(rechercherBtn);
 
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(recherchePanel, BorderLayout.EAST);
 
-        // Panel central
+        // Panel central : table + détails
         JPanel centerPanel = new JPanel(new BorderLayout(20, 0));
         centerPanel.setBackground(BACKGROUND_COLOR);
 
@@ -119,7 +118,7 @@ public class MedecinPanel extends JPanel {
         tableScrollPane.setPreferredSize(new Dimension(600, 0));
         tableScrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
 
-        // Panel des boutons
+        // Panel des boutons d'action
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         buttonsPanel.setBackground(BACKGROUND_COLOR);
         buttonsPanel.add(ajouterBtn);
@@ -137,6 +136,7 @@ public class MedecinPanel extends JPanel {
         centerPanel.add(leftPanel, BorderLayout.CENTER);
         centerPanel.add(detailsPanel, BorderLayout.EAST);
 
+        // Assembly final
         add(topPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
     }
@@ -165,11 +165,11 @@ public class MedecinPanel extends JPanel {
         addFormField(formPanel, gbc, "Prénom :", prenomField, 1);
 
         // Ligne 2
-        addFormField(formPanel, gbc, "Identifiant :", identifiantField, 2);
-        addFormField(formPanel, gbc, "N° RPPS :", numeroRPPSField, 3);
+        addFormField(formPanel, gbc, "N° RPPS :", numeroRPPSField, 2);
+        addFormField(formPanel, gbc, "Identifiant :", identifiantField, 3);
 
         // Ligne 3
-        addFormField(formPanel, gbc, "Téléphone :", telephoneField, 4);
+        addFormField(formPanel, gbc, "Tél :", telephoneField, 4);
         addFormField(formPanel, gbc, "Email :", emailField, 5);
 
         // Ligne 4 (adresse sur toute la largeur)
@@ -191,16 +191,20 @@ public class MedecinPanel extends JPanel {
         formButtonsPanel.setBackground(Color.WHITE);
         formButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton sauvegarderBtn = createStyledButton("💾 Sauvegarder", ACCENT_COLOR);
-        JButton annulerBtn = createStyledButton("❌ Annuler", ERROR_COLOR);
+        JButton sauvegarderBtn = createStyledButton("icons/diskette", "Sauvegarder", PRIMARY_COLOR);
+        JButton annulerBtn = createStyledButton("icons/stock", "Annuler", ERROR_COLOR);
 
         formButtonsPanel.add(sauvegarderBtn);
         formButtonsPanel.add(annulerBtn);
 
+        // Event listeners pour les boutons du formulaire
+        sauvegarderBtn.addActionListener(e -> sauvegarderMedecin());
+        annulerBtn.addActionListener(e -> annulerSaisie());
+
         detailsPanel.add(formButtonsPanel);
 
-        detailsPanel.setPreferredSize(new Dimension(350, 0));
-        detailsPanel.setMaximumSize(new Dimension(350, Integer.MAX_VALUE));
+        detailsPanel.setPreferredSize(new Dimension(300, 0));
+        detailsPanel.setMaximumSize(new Dimension(300, Integer.MAX_VALUE));
     }
 
     private void addFormField(JPanel panel, GridBagConstraints gbc, String labelText, JTextField field, int row) {
@@ -229,27 +233,10 @@ public class MedecinPanel extends JPanel {
                 chargerMedecinSelectionne();
             }
         });
-
-        // Boutons du formulaire
-        Component[] components = detailsPanel.getComponents();
-        for (Component comp : components) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                for (Component subComp : panel.getComponents()) {
-                    if (subComp instanceof JButton) {
-                        JButton btn = (JButton) subComp;
-                        if (btn.getText().contains("Sauvegarder")) {
-                            btn.addActionListener(e -> sauvegarderMedecin());
-                        } else if (btn.getText().contains("Annuler")) {
-                            btn.addActionListener(e -> annulerSaisie());
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private void setupStyles() {
+        // Style de la table
         medecinsTable.setGridColor(new Color(230, 230, 230));
         medecinsTable.setShowGrid(true);
         medecinsTable.setIntercellSpacing(new Dimension(1, 1));
@@ -257,15 +244,27 @@ public class MedecinPanel extends JPanel {
         medecinsTable.getTableHeader().setBackground(new Color(250, 250, 250));
     }
 
-    private JButton createStyledButton(String text, Color color) {
+    private JButton createStyledButton(String iconPath, String text, Color color) {
         JButton button = new JButton(text);
+
+        try {
+            ImageIcon originalIcon = new ImageIcon(iconPath);
+            Image img = originalIcon.getImage();
+            Image scaleImg = img.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+            ImageIcon icon = new ImageIcon(scaleImg);
+            button.setIcon(icon);
+        } catch (Exception e) {
+            // Si l'icône n'est pas trouvée, on continue sans
+        }
+
         button.setFont(new Font("Segoe UI", Font.BOLD, 12));
         button.setForeground(Color.WHITE);
         button.setBackground(color);
-        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+        button.setBorder(new EmptyBorder(8, 8, 8, 8));
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+        // Effet hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
@@ -292,14 +291,15 @@ public class MedecinPanel extends JPanel {
     }
 
     private void rechercherMedecin() {
-        String identifiant = rechercheField.getText().trim();
-        if (identifiant.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Veuillez saisir un identifiant", "Recherche", JOptionPane.WARNING_MESSAGE);
+        String numeroRPPS = rechercheField.getText().trim();
+        if (numeroRPPS.isEmpty()) {
+            afficherMessage("Veuillez saisir un numéro RPPS", true);
             return;
         }
 
-        Optional<Medecin> medecin = controller.rechercherMedecin(identifiant);
+        Optional<Medecin> medecin = controller.rechercherMedecin(numeroRPPS);
         if (medecin.isPresent()) {
+            // Effacer la table et ajouter le médecin trouvé
             tableModel.setRowCount(0);
             ajouterMedecinATable(medecin.get());
             afficherMessage("Médecin trouvé", false);
@@ -310,12 +310,12 @@ public class MedecinPanel extends JPanel {
 
     private void ajouterMedecinATable(Medecin medecin) {
         Object[] row = {
-                medecin.getIdentifiant(),
+                medecin.getNumeroRPPS(),
                 medecin.getNom(),
                 medecin.getPrenom(),
                 medecin.getVille(),
                 medecin.getNumTelephone(),
-                medecin.getNumeroRPPS()
+                medecin.getEmail()
         };
         tableModel.addRow(row);
     }
@@ -323,8 +323,8 @@ public class MedecinPanel extends JPanel {
     private void chargerMedecinSelectionne() {
         int selectedRow = medecinsTable.getSelectedRow();
         if (selectedRow >= 0) {
-            String identifiant = (String) tableModel.getValueAt(selectedRow, 0);
-            Optional<Medecin> medecinOpt = controller.rechercherMedecin(identifiant);
+            String numeroRPPS = (String) tableModel.getValueAt(selectedRow, 0);
+            Optional<Medecin> medecinOpt = controller.rechercherMedecin(numeroRPPS);
 
             if (medecinOpt.isPresent()) {
                 Medecin medecin = medecinOpt.get();
@@ -341,8 +341,8 @@ public class MedecinPanel extends JPanel {
         villeField.setText(medecin.getVille());
         telephoneField.setText(medecin.getNumTelephone());
         emailField.setText(medecin.getEmail());
-        identifiantField.setText(medecin.getIdentifiant());
         numeroRPPSField.setText(medecin.getNumeroRPPS());
+        identifiantField.setText(medecin.getIdentifiant());
     }
 
     private void viderFormulaire() {
@@ -353,14 +353,14 @@ public class MedecinPanel extends JPanel {
         villeField.setText("");
         telephoneField.setText("");
         emailField.setText("");
-        identifiantField.setText("");
         numeroRPPSField.setText("");
+        identifiantField.setText("");
     }
 
     private void nouveauMedecin() {
         viderFormulaire();
-        identifiantField.setEnabled(true);
         numeroRPPSField.setEnabled(true);
+        identifiantField.setEnabled(true);
     }
 
     private void modifierMedecin() {
@@ -369,21 +369,23 @@ public class MedecinPanel extends JPanel {
             afficherMessage("Veuillez sélectionner un médecin à modifier", true);
             return;
         }
-        identifiantField.setEnabled(false);
         numeroRPPSField.setEnabled(false);
+        identifiantField.setEnabled(false);
     }
 
     private void sauvegarderMedecin() {
         try {
             String resultat;
-            boolean isModification = !identifiantField.isEnabled();
+            boolean isModification = !numeroRPPSField.isEnabled();
 
             if (isModification) {
-                String identifiant = identifiantField.getText().trim();
-                Optional<Medecin> medecinOpt = controller.rechercherMedecin(identifiant);
+                // Modification d'un médecin existant
+                String numeroRPPS = numeroRPPSField.getText().trim();
+                Optional<Medecin> medecinOpt = controller.rechercherMedecin(numeroRPPS);
 
                 if (medecinOpt.isPresent()) {
                     Medecin medecin = medecinOpt.get();
+                    // Mise à jour des champs
                     medecin.setNom(nomField.getText().trim());
                     medecin.setPrenom(prenomField.getText().trim());
                     medecin.setAdresse(adresseField.getText().trim());
@@ -391,12 +393,14 @@ public class MedecinPanel extends JPanel {
                     medecin.setVille(villeField.getText().trim());
                     medecin.setNumTelephone(telephoneField.getText().trim());
                     medecin.setEmail(emailField.getText().trim());
+                    medecin.setIdentifiant(identifiantField.getText().trim());
 
                     resultat = controller.modifierMedecin(medecin);
                 } else {
                     resultat = "Erreur : Médecin non trouvé";
                 }
             } else {
+                // Nouveau médecin
                 resultat = controller.ajouterMedecin(
                         nomField.getText().trim(),
                         prenomField.getText().trim(),
@@ -405,23 +409,18 @@ public class MedecinPanel extends JPanel {
                         villeField.getText().trim(),
                         telephoneField.getText().trim(),
                         emailField.getText().trim(),
-                        identifiantField.getText().trim(),
-                        numeroRPPSField.getText().trim()
+                        numeroRPPSField.getText().trim(),
+                        identifiantField.getText().trim()
                 );
             }
 
             boolean isError = resultat.contains("Erreur");
             afficherMessage(resultat, isError);
-
             if (!isError) {
                 viderFormulaire();
-                identifiantField.setEnabled(true);
                 numeroRPPSField.setEnabled(true);
-                if (isModification) {
-                    rechercherMedecin();
-                }
+                identifiantField.setEnabled(true);
             }
-
         } catch (Exception e) {
             afficherMessage("Erreur : " + e.getMessage(), true);
         }
@@ -429,8 +428,8 @@ public class MedecinPanel extends JPanel {
 
     private void annulerSaisie() {
         viderFormulaire();
-        identifiantField.setEnabled(true);
         numeroRPPSField.setEnabled(true);
+        identifiantField.setEnabled(true);
         medecinsTable.clearSelection();
     }
 
@@ -441,7 +440,7 @@ public class MedecinPanel extends JPanel {
             return;
         }
 
-        String identifiant = (String) tableModel.getValueAt(selectedRow, 0);
+        String numeroRPPS = (String) tableModel.getValueAt(selectedRow, 0);
         String nom = (String) tableModel.getValueAt(selectedRow, 1);
         String prenom = (String) tableModel.getValueAt(selectedRow, 2);
 
@@ -454,7 +453,7 @@ public class MedecinPanel extends JPanel {
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
-            String resultat = controller.supprimerMedecin(identifiant);
+            String resultat = controller.supprimerMedecin(numeroRPPS);
             boolean isError = resultat.contains("Erreur");
             afficherMessage(resultat, isError);
 
