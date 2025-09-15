@@ -7,8 +7,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Optional;
 
 /**
@@ -199,16 +197,16 @@ public class ClientPanel extends JPanel {
         formButtonsPanel.setBackground(Color.WHITE);
         formButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton sauvegarderBtn = createStyledButton("icons/diskette","Sauvegarder", PRIMARY_COLOR);
-        JButton annulerBtn = createStyledButton("icons/stock","Annuler", ERROR_COLOR);
+        JButton sauvegarderBtn = createStyledButton("icons/diskette.png","Sauvegarder", PRIMARY_COLOR);
+        JButton annulerBtn = createStyledButton("icons/remove.png","Annuler", ERROR_COLOR);
 
         formButtonsPanel.add(sauvegarderBtn);
         formButtonsPanel.add(annulerBtn);
 
         detailsPanel.add(formButtonsPanel);
 
-        detailsPanel.setPreferredSize(new Dimension(300, 0));
-        detailsPanel.setMaximumSize(new Dimension(300, Integer.MAX_VALUE));
+        detailsPanel.setPreferredSize(new Dimension(380, 0));
+        detailsPanel.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
     }
 
     private void addFormField(JPanel panel, GridBagConstraints gbc, String labelText, JTextField field, int row) {

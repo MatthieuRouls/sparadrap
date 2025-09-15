@@ -194,8 +194,8 @@ public class MedecinPanel extends JPanel {
         formButtonsPanel.setBackground(Color.WHITE);
         formButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton sauvegarderBtn = createStyledButton("icons/diskette", "Sauvegarder", PRIMARY_COLOR);
-        JButton annulerBtn = createStyledButton("icons/stock", "Annuler", ERROR_COLOR);
+        JButton sauvegarderBtn = createStyledButton("icons/diskette.png", "Sauvegarder", PRIMARY_COLOR);
+        JButton annulerBtn = createStyledButton("icons/cross.png", "Annuler", ERROR_COLOR);
 
         formButtonsPanel.add(sauvegarderBtn);
         formButtonsPanel.add(annulerBtn);
@@ -206,8 +206,8 @@ public class MedecinPanel extends JPanel {
 
         detailsPanel.add(formButtonsPanel);
 
-        detailsPanel.setPreferredSize(new Dimension(300, 0));
-        detailsPanel.setMaximumSize(new Dimension(300, Integer.MAX_VALUE));
+        detailsPanel.setPreferredSize(new Dimension(380, 0));
+        detailsPanel.setMaximumSize(new Dimension(380, Integer.MAX_VALUE));
     }
 
     private void addFormField(JPanel panel, GridBagConstraints gbc, String labelText, JTextField field, int row) {

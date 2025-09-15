@@ -200,6 +200,15 @@ public class GestPharmacieService {
                 .collect(Collectors.toList());
     }
 
+    public Optional<Achat> getAchatParReference(String reference) {
+        if (reference == null || reference.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return achats.stream()
+                .filter(a -> reference.equals(a.getReference()))
+                .findFirst();
+    }
+
     public int getNombreVentesParPeriode(Date debut, Date fin) {
         try {
             return (int) readVentesBetween(debut, fin).count();

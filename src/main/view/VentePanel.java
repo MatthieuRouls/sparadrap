@@ -10,7 +10,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * Panel complet pour la gestion des ventes
@@ -414,11 +413,18 @@ public class VentePanel extends JPanel {
         private JTextField ordonnanceRefField;
         private JTable medicamentsTable;
         private DefaultTableModel medicamentsModel;
+        private JButton rechercherClientBtn;
+        private JButton rechercherMedecinBtn;
+        private JButton ajouterMedicamentBtn;
+        private JButton retirerSelectionBtn;
+        private JButton validerBtn;
+        private JButton annulerBtn;
 
         public VenteOrdonnancePanel(PharmacieController controller) {
             this.controller = controller;
             initializeComponents();
             setupLayout();
+            setupEventListeners();
         }
 
         private void initializeComponents() {
@@ -468,7 +474,8 @@ public class VentePanel extends JPanel {
             gbc.gridx = 1;
             panel.add(clientIdField, gbc);
             gbc.gridx = 2;
-            panel.add(createStyledButton("🔍", SECONDARY_COLOR), gbc);
+            rechercherClientBtn = createStyledButton("🔍", SECONDARY_COLOR);
+            panel.add(rechercherClientBtn, gbc);
 
             // Ligne 2
             gbc.gridx = 0; gbc.gridy = 1;
@@ -476,7 +483,8 @@ public class VentePanel extends JPanel {
             gbc.gridx = 1;
             panel.add(medecinIdField, gbc);
             gbc.gridx = 2;
-            panel.add(createStyledButton("🔍", SECONDARY_COLOR), gbc);
+            rechercherMedecinBtn = createStyledButton("🔍", SECONDARY_COLOR);
+            panel.add(rechercherMedecinBtn, gbc);
 
             // Ligne 3
             gbc.gridx = 0; gbc.gridy = 2;
@@ -496,8 +504,10 @@ public class VentePanel extends JPanel {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             buttonPanel.setBackground(Color.WHITE);
-            buttonPanel.add(createStyledButton("Ajouter médicament", PRIMARY_COLOR));
-            buttonPanel.add(createStyledButton("Retirer sélection", ERROR_COLOR));
+            ajouterMedicamentBtn = createStyledButton("Ajouter médicament", PRIMARY_COLOR);
+            retirerSelectionBtn = createStyledButton("Retirer sélection", ERROR_COLOR);
+            buttonPanel.add(ajouterMedicamentBtn);
+            buttonPanel.add(retirerSelectionBtn);
 
             panel.add(scrollPane, BorderLayout.CENTER);
             panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -510,11 +520,11 @@ public class VentePanel extends JPanel {
             panel.setBackground(BACKGROUND_COLOR);
             panel.setBorder(new EmptyBorder(20, 0, 0, 0));
 
-            JButton validerBtn = createStyledButton("Valider ordonnance", SUCCESS_COLOR);
+            validerBtn = createStyledButton("Valider ordonnance", SUCCESS_COLOR);
             validerBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
             validerBtn.setPreferredSize(new Dimension(200, 40));
 
-            JButton annulerBtn = createStyledButton("Annuler", ERROR_COLOR);
+            annulerBtn = createStyledButton("Annuler", ERROR_COLOR);
             annulerBtn.setPreferredSize(new Dimension(120, 40));
 
             panel.add(validerBtn);
@@ -522,6 +532,128 @@ public class VentePanel extends JPanel {
             panel.add(annulerBtn);
 
             return panel;
+        }
+
+        private void setupEventListeners() {
+            // Recherche client
+            if (rechercherClientBtn != null) {
+                rechercherClientBtn.addActionListener(e -> {
+                    String id = clientIdField.getText().trim();
+                    if (id.isEmpty()) { afficherMessage("Veuillez saisir l'identifiant client", true); return; }
+                    Optional<Client> clientOpt = controller.rechercherClient(id);
+                    afficherMessage(clientOpt.isPresent() ? "Client sélectionné" : "Client non trouvé", clientOpt.isEmpty());
+                });
+            }
+            // Recherche médecin
+            if (rechercherMedecinBtn != null) {
+                rechercherMedecinBtn.addActionListener(e -> {
+                    String id = medecinIdField.getText().trim();
+                    if (id.isEmpty()) { afficherMessage("Veuillez saisir l'identifiant médecin", true); return; }
+                    Optional<Medecin> medOpt = controller.rechercherMedecin(id);
+                    afficherMessage(medOpt.isPresent() ? "Médecin sélectionné" : "Médecin non trouvé", medOpt.isEmpty());
+                });
+            }
+
+            // Ajouter médicament
+            if (ajouterMedicamentBtn != null) {
+                ajouterMedicamentBtn.addActionListener(e -> {
+                    String nom = JOptionPane.showInputDialog(this, "Nom du médicament :", "Ajouter médicament", JOptionPane.QUESTION_MESSAGE);
+                    if (nom == null || nom.trim().isEmpty()) return;
+                    String qteStr = JOptionPane.showInputDialog(this, "Quantité prescrite :", "1");
+                    if (qteStr == null || qteStr.trim().isEmpty()) return;
+                    int qtePrescrite;
+                    try { qtePrescrite = Integer.parseInt(qteStr.trim()); } catch (Exception ex) { afficherMessage("Quantité invalide", true); return; }
+                    Optional<Medicament> medOpt = controller.rechercherMedicament(nom.trim());
+                    if (medOpt.isEmpty()) { afficherMessage("Médicament introuvable", true); return; }
+                    Medicament m = medOpt.get();
+                    int disponible = m.getQuantiteStock();
+                    int delivree = Math.min(qtePrescrite, disponible);
+                    medicamentsModel.addRow(new Object[]{m.getNom(), qtePrescrite, disponible, delivree, String.format("%.2f €", m.getPrix())});
+                });
+            }
+
+            // Retirer sélection
+            if (retirerSelectionBtn != null) {
+                retirerSelectionBtn.addActionListener(e -> {
+                    int row = medicamentsTable.getSelectedRow();
+                    if (row >= 0) {
+                        medicamentsModel.removeRow(row);
+                    } else {
+                        afficherMessage("Sélectionnez une ligne à retirer", true);
+                    }
+                });
+            }
+
+            // Valider ordonnance
+            if (validerBtn != null) {
+                validerBtn.addActionListener(e -> {
+                    String clientId = clientIdField.getText().trim();
+                    String medecinId = medecinIdField.getText().trim();
+                    if (clientId.isEmpty() || medecinId.isEmpty()) { afficherMessage("Renseignez client et médecin", true); return; }
+                    Map<String, Integer> delivre = new HashMap<>();
+                    for (int i = 0; i < medicamentsModel.getRowCount(); i++) {
+                        String nom = (String) medicamentsModel.getValueAt(i, 0);
+                        Object qObj = medicamentsModel.getValueAt(i, 3);
+                        int qte;
+                        try {
+                            qte = (qObj instanceof Integer) ? (Integer) qObj : Integer.parseInt(String.valueOf(qObj));
+                        } catch (Exception ex) {
+                            afficherMessage("Quantité délivrée invalide à la ligne " + (i+1), true);
+                            return;
+                        }
+                        if (qte > 0) delivre.put(nom, qte);
+                    }
+                    if (delivre.isEmpty()) { afficherMessage("Aucune quantité délivrée", true); return; }
+                    String res = controller.effectuerVenteOrdonnance(clientId, medecinId, delivre);
+                    boolean isError = res.toLowerCase().contains("erreur") || res.toLowerCase().contains("insuffisant") || res.toLowerCase().contains("périmé");
+                    if (isError) {
+                        afficherMessage(res, true);
+                    } else {
+                        // Afficher un récapitulatif détaillé dans un dialog
+                        JTextArea area = new JTextArea(res);
+                        area.setEditable(false);
+                        area.setFont(new Font("Monospaced", Font.PLAIN, 12));
+                        area.setBorder(new EmptyBorder(10, 10, 10, 10));
+                        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Ordonnance validée", JOptionPane.INFORMATION_MESSAGE);
+                        afficherMessage("Ordonnance validée", false);
+                    }
+                    if (!isError) {
+                        // Rafraîchir stats/stock
+                        try {
+                            Calendar cal = Calendar.getInstance();
+                            cal.set(Calendar.HOUR_OF_DAY, 0);
+                            cal.set(Calendar.MINUTE, 0);
+                            cal.set(Calendar.SECOND, 0);
+                            cal.set(Calendar.MILLISECOND, 0);
+                            Date debutJour = cal.getTime();
+                            Date maintenant = new Date();
+                            Map<String, Object> statsJour = controller.obtenirStatistiques(debutJour, maintenant);
+                            int nbVentes = (Integer) statsJour.getOrDefault("nombreVentes", 0);
+                            double ca = (Double) statsJour.getOrDefault("chiffreAffaires", 0.0);
+                            String caStr = String.format("%.2f €", ca);
+                            DataEventManager.VenteEvents.venteCompleted(nbVentes, caStr);
+                        } catch (Exception ignored) {}
+                        DataEventManager.MedicamentEvents.stockUpdated();
+                        DataEventManager.getInstance().fireEvent(DataEventManager.EventType.STOCK_UPDATED);
+                        // Reset
+                        clientIdField.setText("");
+                        medecinIdField.setText("");
+                        ordonnanceRefField.setText("");
+                        medicamentsModel.setRowCount(0);
+                    }
+                });
+            }
+
+            // Annuler
+            if (annulerBtn != null) {
+                annulerBtn.addActionListener(e -> {
+                    clientIdField.setText("");
+                    medecinIdField.setText("");
+                    ordonnanceRefField.setText("");
+                    medicamentsModel.setRowCount(0);
+                    afficherMessage("Saisie annulée", false);
+                });
+            }
         }
     }
 
@@ -548,7 +680,7 @@ public class VentePanel extends JPanel {
             setBackground(BACKGROUND_COLOR);
 
             // Table de l'historique
-            String[] colonnes = {"Référence", "Date", "Client", "Type", "Montant", "Remboursé", "Net"};
+            String[] colonnes = {"Référence", "Date", "Heure", "Client", "Type", "Montant", "Remboursé", "Net"};
             historiqueModel = new DefaultTableModel(colonnes, 0) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
@@ -621,7 +753,7 @@ public class VentePanel extends JPanel {
         }
 
         private void setupEventListeners() {
-            filtreCombo.addActionListener(e -> appliquerFiltre());
+            filtreCombo.addActionListener(e -> rechargerHistorique());
             rechercheField.addActionListener(e -> effectuerRecherche());
 
             // Double-clic pour voir les détails d'une vente
@@ -635,16 +767,18 @@ public class VentePanel extends JPanel {
             });
         }
 
-        private void appliquerFiltre() {
-            String filtre = (String) filtreCombo.getSelectedItem();
-            // Logique de filtrage à implémenter
-            afficherMessage("Filtre appliqué: " + filtre, false);
-        }
-
         private void effectuerRecherche() {
             String terme = rechercheField.getText().trim();
             if (!terme.isEmpty()) {
-                // Logique de recherche à implémenter
+                // recharger et sélectionner la ligne par référence
+                rechargerHistorique();
+                for (int i = 0; i < historiqueModel.getRowCount(); i++) {
+                    if (terme.equals(historiqueModel.getValueAt(i, 0))) {
+                        historiqueTable.setRowSelectionInterval(i, i);
+                        historiqueTable.scrollRectToVisible(historiqueTable.getCellRect(i, 0, true));
+                        break;
+                    }
+                }
                 afficherMessage("Recherche: " + terme, false);
             }
         }
@@ -657,14 +791,71 @@ public class VentePanel extends JPanel {
                 new DetailVenteDialog(SwingUtilities.getWindowAncestor(this), controller, reference).setVisible(true);
             }
         }
+
+        private void rechargerHistorique() {
+            // Déterminer la période selon le filtre
+            Calendar cal = Calendar.getInstance();
+            Date fin = cal.getTime();
+            String filtre = (String) filtreCombo.getSelectedItem();
+            if ("Aujourd'hui".equals(filtre)) {
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+            } else if ("Cette semaine".equals(filtre)) {
+                cal.set(Calendar.DAY_OF_WEEK, cal.getFirstDayOfWeek());
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+            } else if ("Ce mois".equals(filtre)) {
+                cal.set(Calendar.DAY_OF_MONTH, 1);
+                cal.set(Calendar.HOUR_OF_DAY, 0);
+                cal.set(Calendar.MINUTE, 0);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+            } else {
+                // Par défaut: dernier mois
+                cal.add(Calendar.MONTH, -1);
+            }
+            Date debut = cal.getTime();
+
+            java.util.List<main.model.Transaction.TypeTransaction.Achat> achats = controller.obtenirHistoriqueVentes(debut, fin);
+
+            // Remplir le tableau
+            historiqueModel.setRowCount(0);
+            java.text.SimpleDateFormat dfDate = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            java.text.SimpleDateFormat dfHeure = new java.text.SimpleDateFormat("HH:mm:ss");
+            for (main.model.Transaction.TypeTransaction.Achat a : achats) {
+                String type = a.getType() == main.model.Medicament.TypeAchat.ORDONNANCE ? "Ordonnance" : "Directe";
+                double total = a.getMontantTotal();
+                double remb = a.getMontantRembourse();
+                double net = total - remb;
+                historiqueModel.addRow(new Object[]{
+                        a.getReference(),
+                        dfDate.format(a.getDateTransaction()),
+                        dfHeure.format(a.getDateTransaction()),
+                        a.getClient().getNom() + " " + a.getClient().getPrenom(),
+                        type,
+                        String.format("%.2f €", total),
+                        String.format("%.2f €", remb),
+                        String.format("%.2f €", net)
+                });
+            }
+        }
     }
 
     /**
      * Dialog pour afficher les détails d'une vente
      */
     private class DetailVenteDialog extends JDialog {
+        private final PharmacieController controller;
+        private final String reference;
+
         public DetailVenteDialog(Window parent, PharmacieController controller, String reference) {
             super(parent, "Détails de la vente - " + reference, ModalityType.APPLICATION_MODAL);
+            this.controller = controller;
+            this.reference = reference;
             initializeDialog();
         }
 
@@ -678,12 +869,63 @@ public class VentePanel extends JPanel {
             // Informations générales
             JPanel infoPanel = new JPanel(new GridBagLayout());
             infoPanel.setBorder(BorderFactory.createTitledBorder("Informations générales"));
-            // Ajouter les informations de la vente ici
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(5, 5, 5, 5);
+            gbc.anchor = GridBagConstraints.WEST;
+
+            Optional<main.model.Transaction.TypeTransaction.Achat> achatOpt = controller.rechercherAchatParReference(reference);
+            if (achatOpt.isPresent()) {
+                main.model.Transaction.TypeTransaction.Achat achat = achatOpt.get();
+                java.text.SimpleDateFormat dfDate = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                java.text.SimpleDateFormat dfHeure = new java.text.SimpleDateFormat("HH:mm:ss");
+
+                int y = 0;
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Référence:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(achat.getReference()), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Date:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(dfDate.format(achat.getDateTransaction())), gbc);
+                gbc.gridx = 2; infoPanel.add(new JLabel("Heure:"), gbc);
+                gbc.gridx = 3; infoPanel.add(new JLabel(dfHeure.format(achat.getDateTransaction())), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Client:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(achat.getClient().getNom() + " " + achat.getClient().getPrenom()), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Type:"), gbc);
+                String type = achat.getType() == main.model.Medicament.TypeAchat.ORDONNANCE ? "Ordonnance" : "Directe";
+                gbc.gridx = 1; infoPanel.add(new JLabel(type), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Montant total:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(String.format("%.2f €", achat.getMontantTotal())), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Remboursé:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(String.format("%.2f €", achat.getMontantRembourse())), gbc); y++;
+
+                gbc.gridx = 0; gbc.gridy = y; infoPanel.add(new JLabel("Net:"), gbc);
+                gbc.gridx = 1; infoPanel.add(new JLabel(String.format("%.2f €", achat.getMontantTotal() - achat.getMontantRembourse())), gbc); y++;
+            } else {
+                infoPanel.add(new JLabel("Achat non trouvé"));
+            }
 
             // Détail des médicaments
             JPanel medicamentsPanel = new JPanel(new BorderLayout());
             medicamentsPanel.setBorder(BorderFactory.createTitledBorder("Médicaments vendus"));
-            // Ajouter la table des médicaments ici
+            String[] cols = {"Médicament", "Quantité", "Prix", "Variation stock"};
+            DefaultTableModel model = new DefaultTableModel(cols, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+            JTable table = new JTable(model);
+            table.setRowHeight(24);
+
+            Optional<main.model.Transaction.TypeTransaction.Achat> achatOpt2 = controller.rechercherAchatParReference(reference);
+            if (achatOpt2.isPresent()) {
+                main.model.Transaction.TypeTransaction.Achat achat = achatOpt2.get();
+                Map<main.model.Medicament.Medicament, Integer> qtes = achat.getQuantites();
+                for (Map.Entry<main.model.Medicament.Medicament, Integer> e : qtes.entrySet()) {
+                    main.model.Medicament.Medicament m = e.getKey();
+                    int q = e.getValue();
+                    model.addRow(new Object[]{m.getNom(), q, String.format("%.2f €", m.getPrix()), String.format("-%d", q)});
+                }
+            }
+            medicamentsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
             // Boutons
             JPanel buttonPanel = new JPanel(new FlowLayout());

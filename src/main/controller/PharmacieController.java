@@ -323,12 +323,36 @@ public class PharmacieController {
             service.enregistrerOrdonnance(ordonnance);
 
             // Créer l'achat
+            String refAchat = "ACH" + System.currentTimeMillis();
             Achat achat = new Achat(new Date(), client, pharmacienConnecte,
-                    "ACH" + System.currentTimeMillis(),
+                    refAchat,
                     TypeAchat.ORDONNANCE, medicaments, quantites);
             service.enregistrerAchat(achat);
 
-            return "Vente sur ordonnance effectuée avec succès";
+            // Détails pour retour utilisateur
+            double montantTotal = achat.getMontantTotal();
+            double tauxMutuelle = 0.0;
+            double montantRembourse = 0.0;
+            if (client.getMutuelle() != null) {
+                tauxMutuelle = client.getMutuelle().getTauxRemboursement();
+                montantRembourse = achat.getMontantRembourse();
+            }
+            double resteAPayer = montantTotal - montantRembourse;
+
+            return String.format(
+                    "Vente sur ordonnance effectuée avec succès\n" +
+                    "Référence ordonnance : %s\n" +
+                    "Référence achat : %s\n" +
+                    "Montant total : %.2f €\n" +
+                    (client.getMutuelle() != null ? "Taux mutuelle : %.1f%%\nMontant remboursé : %.2f €\n" : "") +
+                    "Reste à payer : %.2f €",
+                    refOrdonnance,
+                    refAchat,
+                    montantTotal,
+                    tauxMutuelle,
+                    montantRembourse,
+                    resteAPayer
+            );
 
         } catch (Exception e) {
             return "Erreur : " + e.getMessage();
@@ -374,6 +398,14 @@ public class PharmacieController {
             return service.getAchatsParPeriode(debut, fin);
         } catch (Exception e) {
             return new ArrayList<>();
+        }
+    }
+
+    public Optional<Achat> rechercherAchatParReference(String reference) {
+        try {
+            return service.getAchatParReference(reference);
+        } catch (Exception e) {
+            return Optional.empty();
         }
     }
 

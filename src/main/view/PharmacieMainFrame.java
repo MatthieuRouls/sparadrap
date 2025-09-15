@@ -6,8 +6,6 @@ import main.model.Personne.CategoriePersonne.Pharmacien;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Date;
 
 /**
@@ -279,6 +277,41 @@ public class PharmacieMainFrame extends JFrame implements DataRefreshListener {
         actionsLabel.setForeground(TEXT_COLOR);
 
         JButton nouvelleVenteBtn = createActionButton("Nouvelle vente", ACCENT_COLOR);
+        nouvelleVenteBtn.addActionListener(e -> {
+            // Afficher l'onglet Ventes
+            CardLayout cl = (CardLayout) contentPanel.getLayout();
+            cl.show(contentPanel, "ventes");
+            updateStatusLabel("Navigation : Ventes - Nouvelle vente");
+
+            // Sélection visuelle du bouton sidebar "Ventes"
+            for (Component comp : sidebarPanel.getComponents()) {
+                if (comp instanceof JButton) {
+                    JButton btn = (JButton) comp;
+                    boolean isVentes = "ventes".equals(btn.getActionCommand());
+                    btn.setBackground(isVentes ? PRIMARY_COLOR : SIDEBAR_COLOR);
+                    btn.setForeground(isVentes ? Color.WHITE : TEXT_COLOR);
+                }
+            }
+
+            // Tenter de sélectionner l'onglet "Vente Directe" si disponible
+            try {
+                for (Component comp : contentPanel.getComponents()) {
+                    if (comp instanceof VentePanel) {
+                        VentePanel vp = (VentePanel) comp;
+                        // Sélectionner le premier onglet (Vente Directe)
+                        java.lang.reflect.Field tabField = VentePanel.class.getDeclaredField("tabbedPane");
+                        tabField.setAccessible(true);
+                        JTabbedPane tabs = (JTabbedPane) tabField.get(vp);
+                        if (tabs != null && tabs.getTabCount() > 0) {
+                            tabs.setSelectedIndex(0);
+                        }
+                        break;
+                    }
+                }
+            } catch (Exception ignore) {
+                // En cas d'échec de la réflexion, on reste simplement sur le panel Ventes
+            }
+        });
         JButton rechercherClientBtn = createActionButton("Rechercher client", SECONDARY_COLOR);
         JButton stockBtn = createActionButton("Gérer stock", PRIMARY_COLOR);
 

@@ -20,13 +20,13 @@ public class MedicamentPanel extends JPanel implements DataRefreshListener {
     private final PharmacieController controller;
 
     // Couleurs du thème
-    private static final Color PRIMARY_COLOR = new Color(41, 128, 185);
-    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
-    private static final Color ACCENT_COLOR = new Color(46, 204, 113);
-    private static final Color ERROR_COLOR = new Color(231, 76, 60);
-    private static final Color WARNING_COLOR = new Color(243, 156, 18);
+    private static final Color PRIMARY_COLOR = new Color(0, 62, 28);
+    private static final Color SECONDARY_COLOR = new Color(0, 62, 28);
+    private static final Color ACCENT_COLOR = new Color(0, 62, 28);
+    private static final Color ERROR_COLOR = new Color(163, 35, 43);
+    private static final Color WARNING_COLOR = new Color(163, 35, 43);
     private static final Color BACKGROUND_COLOR = new Color(248, 249, 250);
-    private static final Color TEXT_COLOR = new Color(44, 62, 80);
+    private static final Color TEXT_COLOR = new Color(0, 37, 15);
 
     // Composants
     private JTextField rechercheField;
