@@ -49,7 +49,7 @@ public class MedecinPanel extends JPanel {
         // Champ de recherche
         rechercheField = new JTextField(20);
         rechercheField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        rechercherBtn = createStyledButton("icons/search.png", "Rechercher", PRIMARY_COLOR);
+        rechercherBtn = createStyledButton("icons/search1.png", "Rechercher", PRIMARY_COLOR);
 
         // Table des médecins
         String[] colonnes = {"N° RPPS", "Nom", "Prénom", "Ville", "Téléphone", "Email"};
@@ -65,9 +65,9 @@ public class MedecinPanel extends JPanel {
         medecinsTable.getTableHeader().setReorderingAllowed(false);
 
         // Boutons d'action
-        ajouterBtn = createStyledButton("icons/add.png", "Ajouter", PRIMARY_COLOR);
-        modifierBtn = createStyledButton("icons/edit.png", "Modifier", PRIMARY_COLOR);
-        supprimerBtn = createStyledButton("icons/remove.png", "Supprimer", ERROR_COLOR);
+        ajouterBtn = createStyledButton("icons/user-add.png", "Ajouter", PRIMARY_COLOR);
+        modifierBtn = createStyledButton("icons/edit1.png", "Modifier", PRIMARY_COLOR);
+        supprimerBtn = createStyledButton("icons/trash.png", "Supprimer", ERROR_COLOR);
 
         // Panel de détails/formulaire
         detailsPanel = new JPanel();
@@ -124,7 +124,7 @@ public class MedecinPanel extends JPanel {
         buttonsPanel.add(ajouterBtn);
         buttonsPanel.add(modifierBtn);
         buttonsPanel.add(supprimerBtn);
-        JButton afficherTousBtn = createStyledButton("icons/search.png", "Afficher tous", PRIMARY_COLOR);
+        JButton afficherTousBtn = createStyledButton("icons/users-alt.png", "Afficher tous", PRIMARY_COLOR);
         afficherTousBtn.addActionListener(e -> rechargerTousMedecins());
         buttonsPanel.add(afficherTousBtn);
 
@@ -194,8 +194,8 @@ public class MedecinPanel extends JPanel {
         formButtonsPanel.setBackground(Color.WHITE);
         formButtonsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton sauvegarderBtn = createStyledButton("icons/diskette.png", "Sauvegarder", PRIMARY_COLOR);
-        JButton annulerBtn = createStyledButton("icons/cross.png", "Annuler", ERROR_COLOR);
+        JButton sauvegarderBtn = createStyledButton("icons/disk.png", "Sauvegarder", PRIMARY_COLOR);
+        JButton annulerBtn = createStyledButton("icons/trash.png", "Annuler", ERROR_COLOR);
 
         formButtonsPanel.add(sauvegarderBtn);
         formButtonsPanel.add(annulerBtn);
@@ -250,33 +250,46 @@ public class MedecinPanel extends JPanel {
     private JButton createStyledButton(String iconPath, String text, Color color) {
         JButton button = new JButton(text);
 
-        try {
             ImageIcon originalIcon = new ImageIcon(iconPath);
             Image img = originalIcon.getImage();
             Image scaleImg = img.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
             ImageIcon icon = new ImageIcon(scaleImg);
             button.setIcon(icon);
-        } catch (Exception e) {
-            // Si l'icône n'est pas trouvée, on continue sans
-        }
+
 
         button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setForeground(Color.WHITE);
-        button.setBackground(color);
-        button.setBorder(new EmptyBorder(8, 8, 8, 8));
+        button.setForeground(color);
+        button.setBackground(Color.WHITE);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 1),  // Contour coloré de 1px
+                new EmptyBorder(6, 6, 6, 6)    // Espacement interne
+        ));
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true);
 
         // Effet hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(color.darker());
+                // Au survol : fond coloré, texte blanc
+                button.setBackground(color);
+                button.setForeground(Color.WHITE);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(color.darker(), 1),
+                        new EmptyBorder(6, 6, 6, 6)
+                ));
             }
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(color);
+                // Retour à l'état initial : fond transparent, texte coloré
+                button.setBackground(Color.WHITE);
+                button.setForeground(color);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(color, 1),
+                        new EmptyBorder(6, 6, 6, 6)
+                ));
             }
         });
 

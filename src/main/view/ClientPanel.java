@@ -121,7 +121,7 @@ public class ClientPanel extends JPanel {
         tableScrollPane.setPreferredSize(new Dimension(600, 0));
         tableScrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
 
-        // Panel des boutons d'action (au-dessus de la table)
+        // Panel des boutons d'action (au-dessus du tableau)
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         buttonsPanel.setBackground(BACKGROUND_COLOR);
         buttonsPanel.add(ajouterBtn);

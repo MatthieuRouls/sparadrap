@@ -19,10 +19,10 @@ public class VentePanel extends JPanel {
 
     // Couleurs du thème
     private static final Color PRIMARY_COLOR = new Color(0, 62, 28);
-    private static final Color SECONDARY_COLOR = new Color(117, 187, 153);
+    private static final Color SECONDARY_COLOR = new Color(0, 62, 28);
     private static final Color ACCENT_COLOR = new Color(217, 243, 228);
     private static final Color ERROR_COLOR = new Color(187, 45, 12);
-    private static final Color SUCCESS_COLOR = new Color(46, 204, 113);
+    private static final Color SUCCESS_COLOR = new Color(0, 62, 28);
     private static final Color BACKGROUND_COLOR = new Color(248, 249, 250);
     private static final Color TEXT_COLOR = new Color(1, 17, 9);
 
@@ -171,7 +171,7 @@ public class VentePanel extends JPanel {
             panel.add(new JLabel("ID Client:"));
             panel.add(clientIdField);
 
-            rechercherClientBtn = createStyledButton("Rechercher", SECONDARY_COLOR);
+            rechercherClientBtn = createStyledButton("icons/search1.png","Rechercher", SECONDARY_COLOR);
             panel.add(rechercherClientBtn);
 
             clientInfoLabel = new JLabel("Aucun client sélectionné");
@@ -190,7 +190,7 @@ public class VentePanel extends JPanel {
             panel.add(new JLabel("Quantité:"));
             panel.add(quantiteSpinner);
 
-            ajouterBtn = createStyledButton("Ajouter", PRIMARY_COLOR);
+            ajouterBtn = createStyledButton("icons/shopping-cart-add.png","Ajouter", PRIMARY_COLOR);
             panel.add(ajouterBtn);
 
             return panel;
@@ -213,8 +213,8 @@ public class VentePanel extends JPanel {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             buttonPanel.setBackground(Color.WHITE);
-            retirerBtn = createStyledButton("Retirer sélection", ERROR_COLOR);
-            viderBtn = createStyledButton("Vider panier", ERROR_COLOR);
+            retirerBtn = createStyledButton("icons/minus-small.png","Retirer sélection", ERROR_COLOR);
+            viderBtn = createStyledButton("icons/trash.png","Vider panier", ERROR_COLOR);
             buttonPanel.add(retirerBtn);
             buttonPanel.add(viderBtn);
 
@@ -230,11 +230,11 @@ public class VentePanel extends JPanel {
             panel.setBackground(BACKGROUND_COLOR);
             panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
 
-            validerBtn = createStyledButton("💳 Valider la vente", SUCCESS_COLOR);
+            validerBtn = createStyledButton("icons/validating-receipt.png","Valider la vente", SUCCESS_COLOR);
             validerBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
             validerBtn.setPreferredSize(new Dimension(200, 40));
 
-            annulerBtn = createStyledButton("❌ Annuler", ERROR_COLOR);
+            annulerBtn = createStyledButton("icons/close.png","Annuler", ERROR_COLOR);
             annulerBtn.setPreferredSize(new Dimension(120, 40));
 
             panel.add(validerBtn);
@@ -474,7 +474,7 @@ public class VentePanel extends JPanel {
             gbc.gridx = 1;
             panel.add(clientIdField, gbc);
             gbc.gridx = 2;
-            rechercherClientBtn = createStyledButton("🔍", SECONDARY_COLOR);
+            rechercherClientBtn = createStyledButton("icons/search1.png","", SECONDARY_COLOR);
             panel.add(rechercherClientBtn, gbc);
 
             // Ligne 2
@@ -483,7 +483,7 @@ public class VentePanel extends JPanel {
             gbc.gridx = 1;
             panel.add(medecinIdField, gbc);
             gbc.gridx = 2;
-            rechercherMedecinBtn = createStyledButton("🔍", SECONDARY_COLOR);
+            rechercherMedecinBtn = createStyledButton("icons/search1.png","", SECONDARY_COLOR);
             panel.add(rechercherMedecinBtn, gbc);
 
             // Ligne 3
@@ -504,8 +504,8 @@ public class VentePanel extends JPanel {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             buttonPanel.setBackground(Color.WHITE);
-            ajouterMedicamentBtn = createStyledButton("Ajouter médicament", PRIMARY_COLOR);
-            retirerSelectionBtn = createStyledButton("Retirer sélection", ERROR_COLOR);
+            ajouterMedicamentBtn = createStyledButton("icons/book-plus.png","Ajouter médicament", PRIMARY_COLOR);
+            retirerSelectionBtn = createStyledButton("icons/trash.png","Retirer sélection", ERROR_COLOR);
             buttonPanel.add(ajouterMedicamentBtn);
             buttonPanel.add(retirerSelectionBtn);
 
@@ -520,11 +520,11 @@ public class VentePanel extends JPanel {
             panel.setBackground(BACKGROUND_COLOR);
             panel.setBorder(new EmptyBorder(20, 0, 0, 0));
 
-            validerBtn = createStyledButton("Valider ordonnance", SUCCESS_COLOR);
+            validerBtn = createStyledButton("icons/registration-paper.png", "Valider Ordonnance", SUCCESS_COLOR);
             validerBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
             validerBtn.setPreferredSize(new Dimension(200, 40));
 
-            annulerBtn = createStyledButton("Annuler", ERROR_COLOR);
+            annulerBtn = createStyledButton("icons/trash.png", "Annuler", ERROR_COLOR);
             annulerBtn.setPreferredSize(new Dimension(120, 40));
 
             panel.add(validerBtn);
@@ -730,8 +730,8 @@ public class VentePanel extends JPanel {
             panel.add(Box.createHorizontalStrut(20));
             panel.add(new JLabel("Rechercher:"));
             panel.add(rechercheField);
-            panel.add(createStyledButton("🔍", SECONDARY_COLOR));
-            panel.add(createStyledButton("🔄 Actualiser", PRIMARY_COLOR));
+            panel.add(createStyledButton("icons/search1.png", "", SECONDARY_COLOR));
+            panel.add(createStyledButton("icons/refresh.png", "Actualiser", PRIMARY_COLOR));
 
             return panel;
         }
@@ -929,8 +929,8 @@ public class VentePanel extends JPanel {
 
             // Boutons
             JPanel buttonPanel = new JPanel(new FlowLayout());
-            JButton reimprimer = createStyledButton("🖨️ Réimprimer", SECONDARY_COLOR);
-            JButton fermer = createStyledButton("Fermer", PRIMARY_COLOR);
+            JButton reimprimer = createStyledButton("icons/print.png", "Re-imprimer", SECONDARY_COLOR);
+            JButton fermer = createStyledButton("icons/close.png", "Fermer", PRIMARY_COLOR);
             fermer.addActionListener(e -> dispose());
             buttonPanel.add(reimprimer);
             buttonPanel.add(fermer);
@@ -970,25 +970,52 @@ public class VentePanel extends JPanel {
         return section;
     }
 
-    private JButton createStyledButton(String text, Color color) {
+    private JButton createStyledButton(String iconPath, String text, Color color) {
         JButton button = new JButton(text);
+
+        ImageIcon originalIcon = new ImageIcon(iconPath);
+        Image img = originalIcon.getImage();
+        Image scaleImg = img.getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH);
+        ImageIcon icon = new ImageIcon(scaleImg);
+
+        button.setIcon(icon);
+
         button.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        button.setForeground(Color.WHITE);
-        button.setBackground(color);
-        button.setBorder(new EmptyBorder(8, 15, 8, 15));
+
+        // Style initial : fond transparent avec contour coloré
+        button.setForeground(color);           // Texte de la couleur du bouton
+        button.setBackground(Color.WHITE);     // Fond blanc/transparent
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 1),  // Contour coloré de 2px
+                new EmptyBorder(6, 6, 6, 6)               // Espacement interne
+        ));
+
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setContentAreaFilled(true);     // Permettre le remplissage du fond
 
         // Effet hover
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(color.darker());
+                // Au survol : fond coloré, texte blanc
+                button.setBackground(color);
+                button.setForeground(Color.WHITE);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(color.darker(), 1),
+                        new EmptyBorder(6, 6, 6, 6)
+                ));
             }
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(color);
+                // Retour à l'état initial : fond transparent, texte coloré
+                button.setBackground(Color.WHITE);
+                button.setForeground(color);
+                button.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(color, 1),
+                        new EmptyBorder(6, 6, 6, 6)
+                ));
             }
         });
 
