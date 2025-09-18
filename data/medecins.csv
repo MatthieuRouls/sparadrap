@@ -1,0 +1,4 @@
+identifiant;nom;prenom;adresse;codePostal;ville;telephone;email;numeroRPPS
+10101010101;Bernard;Claire;20 Rue Victor Hugo;33000;Bordeaux;0556123456;claire.bernard@cabinet.fr;10101010101
+20202020202;Leroy;Thomas;8 Rue Pasteur;44000;Nantes;0251782345;thomas.leroy@cabinet.fr;20202020202
+30303030303;Nguyen;Sophie;3 Allée des Tilleuls;31000;Toulouse;0561789988;sophie.nguyen@cabinet.fr;30303030303

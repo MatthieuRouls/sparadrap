@@ -41,6 +41,9 @@ public class MedicamentPanel extends JPanel implements DataRefreshListener {
     private JComboBox<CategorieMedicament> categorieCombo;
     private JFormattedTextField datePeremptionField;
 
+    /**
+     * Construit le panel de gestion des médicaments et branche l'écoute des mises à jour de stock.
+     */
     public MedicamentPanel(PharmacieController controller, PharmacieMainFrame mainFrame) {
         this.controller = controller;
         this.mainFrame = mainFrame;
@@ -290,6 +293,17 @@ public class MedicamentPanel extends JPanel implements DataRefreshListener {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
                 new EmptyBorder(5, 8, 5, 8)
         ));
+    }
+
+    /**
+     * Place le focus dans le champ de recherche médicaments.
+     */
+    public void focusRecherche() {
+        SwingUtilities.invokeLater(() -> {
+            if (rechercheField != null) {
+                rechercheField.requestFocusInWindow();
+            }
+        });
     }
 
     private JButton createStyledButton(String iconPath, String text, Color color) {

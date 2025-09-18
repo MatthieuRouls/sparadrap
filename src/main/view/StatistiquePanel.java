@@ -17,10 +17,10 @@ public class StatistiquePanel extends JPanel {
     private final PharmacieController controller;
 
     // Couleurs du thème
-    private static final Color PRIMARY_COLOR = new Color(41, 128, 185);
-    private static final Color SECONDARY_COLOR = new Color(52, 152, 219);
-    private static final Color ACCENT_COLOR = new Color(46, 204, 113);
-    private static final Color ERROR_COLOR = new Color(231, 76, 60);
+    private static final Color PRIMARY_COLOR = new Color(0, 37, 15);
+    private static final Color SECONDARY_COLOR = new Color(0, 37, 15);
+    private static final Color ACCENT_COLOR = new Color(0, 37, 15);
+    private static final Color ERROR_COLOR = new Color(163, 35, 43);
     private static final Color WARNING_COLOR = new Color(243, 156, 18);
     private static final Color BACKGROUND_COLOR = new Color(248, 249, 250);
     private static final Color TEXT_COLOR = new Color(44, 62, 80);
@@ -30,6 +30,9 @@ public class StatistiquePanel extends JPanel {
     private JLabel nbVentesLabel, stockTotalLabel, rupturesLabel;
     private JButton actualiserBtn, exporterBtn;
 
+    /**
+     * Construit le panel des statistiques et initialise l'affichage (jour, mois, année, 30j).
+     */
     public StatistiquePanel(PharmacieController controller) {
         this.controller = controller;
         initializeComponents();
@@ -51,8 +54,8 @@ public class StatistiquePanel extends JPanel {
         rupturesLabel = new JLabel("0");
 
         // Boutons
-        actualiserBtn = createStyledButton("🔄 Actualiser", SECONDARY_COLOR);
-        exporterBtn = createStyledButton("📊 Exporter", PRIMARY_COLOR);
+        actualiserBtn = createStyledButton("Actualiser", SECONDARY_COLOR);
+        exporterBtn = createStyledButton("Exporter", PRIMARY_COLOR);
     }
 
     private void setupLayout() {
@@ -79,12 +82,12 @@ public class StatistiquePanel extends JPanel {
         statsPanel.setBorder(new EmptyBorder(0, 0, 30, 0));
 
         // Cartes de statistiques
-        statsPanel.add(createStatCard("📈", "CA Aujourd'hui", caJourLabel, ACCENT_COLOR));
-        statsPanel.add(createStatCard("📊", "CA Ce Mois", caMoisLabel, PRIMARY_COLOR));
-        statsPanel.add(createStatCard("💰", "CA Cette Année", caAnneeLabel, SECONDARY_COLOR));
-        statsPanel.add(createStatCard("🛒", "Ventes (30j)", nbVentesLabel, new Color(155, 89, 182)));
-        statsPanel.add(createStatCard("📦", "Stock Total", stockTotalLabel, WARNING_COLOR));
-        statsPanel.add(createStatCard("⚠️", "Ruptures", rupturesLabel, ERROR_COLOR));
+        statsPanel.add(createStatCard("", "CA Aujourd'hui", caJourLabel, ACCENT_COLOR));
+        statsPanel.add(createStatCard("", "CA Ce Mois", caMoisLabel, PRIMARY_COLOR));
+        statsPanel.add(createStatCard("", "CA Cette Année", caAnneeLabel, SECONDARY_COLOR));
+        statsPanel.add(createStatCard("", "Ventes (30j)", nbVentesLabel, new Color(0, 37, 15)));
+        statsPanel.add(createStatCard("", "Stock Total", stockTotalLabel, WARNING_COLOR));
+        statsPanel.add(createStatCard("", "Ruptures", rupturesLabel, ERROR_COLOR));
 
         // Panel d'informations détaillées
         JPanel detailsPanel = createDetailsPanel();
@@ -251,24 +254,24 @@ public class StatistiquePanel extends JPanel {
         StringBuilder details = new StringBuilder();
         details.append("=== RAPPORT DÉTAILLÉ ===\n\n");
 
-        details.append("📊 CHIFFRES D'AFFAIRES :\n");
+        details.append("CHIFFRES D'AFFAIRES :\n");
         details.append(String.format("• Aujourd'hui : %.2f €\n", (Double) statsJour.getOrDefault("chiffreAffaires", 0.0)));
         details.append(String.format("• Ce mois : %.2f €\n", (Double) statsMois.getOrDefault("chiffreAffaires", 0.0)));
         details.append(String.format("• Cette année : %.2f €\n", (Double) statsAnnee.getOrDefault("chiffreAffaires", 0.0)));
 
-        details.append("\n🛒 ACTIVITÉ DE VENTE :\n");
+        details.append("\nACTIVITÉ DE VENTE :\n");
         details.append(String.format("• Ventes (30 derniers jours) : %d transactions\n",
                 (Integer) stats30J.getOrDefault("nombreVentes", 0)));
         details.append(String.format("• Montant moyen par vente : %.2f €\n",
                 calculateAverageTransaction(stats30J)));
 
-        details.append("\n📦 GESTION DES STOCKS :\n");
+        details.append("\nGESTION DES STOCKS :\n");
         details.append(String.format("• Total des unités en stock : %d\n",
                 (Integer) statsJour.getOrDefault("stockTotal", 0)));
         details.append(String.format("• Médicaments en rupture : %d\n",
                 (Long) statsJour.getOrDefault("ruptureStock", 0L)));
 
-        details.append("\n💰 REMBOURSEMENTS :\n");
+        details.append("\nREMBOURSEMENTS :\n");
         details.append(String.format("• Montant remboursé (30j) : %.2f €\n",
                 (Double) stats30J.getOrDefault("montantRembourse", 0.0)));
         details.append(String.format("• Bénéfice net (30j) : %.2f €\n",

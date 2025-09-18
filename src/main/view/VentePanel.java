@@ -32,6 +32,9 @@ public class VentePanel extends JPanel {
     private VenteOrdonnancePanel venteOrdonnancePanel;
     private HistoriqueVentePanel historiquePanel;
 
+    /**
+     * Construit le panel de gestion des ventes avec onglets (directe, ordonnance, historique).
+     */
     public VentePanel(PharmacieController controller) {
         this.controller = controller;
         initializeComponents();
@@ -53,9 +56,9 @@ public class VentePanel extends JPanel {
         historiquePanel = new HistoriqueVentePanel(controller);
 
         // Ajouter les onglets
-        tabbedPane.addTab("💳 Vente Directe", venteDirectePanel);
-        tabbedPane.addTab("📋 Vente sur Ordonnance", venteOrdonnancePanel);
-        tabbedPane.addTab("📊 Historique", historiquePanel);
+        tabbedPane.addTab("Vente Directe", venteDirectePanel);
+        tabbedPane.addTab("Vente sur Ordonnance", venteOrdonnancePanel);
+        tabbedPane.addTab("Historique", historiquePanel);
     }
 
     private void setupLayout() {
@@ -104,6 +107,9 @@ public class VentePanel extends JPanel {
         private Map<Medicament, Integer> panier = new HashMap<>();
         private Client clientSelectionne;
 
+        /**
+         * Construit la vue de vente directe (panier, saisie client et médicaments).
+         */
         public VenteDirectePanel(PharmacieController controller) {
             this.controller = controller;
             initializeComponents();
@@ -139,13 +145,13 @@ public class VentePanel extends JPanel {
 
         private void setupLayout() {
             // Panel de sélection client
-            JPanel clientPanel = createSectionPanel("👤 Client", createClientSelectionPanel());
+            JPanel clientPanel = createSectionPanel("Client", createClientSelectionPanel());
 
             // Panel de sélection médicaments
-            JPanel medicamentPanel = createSectionPanel("💊 Ajouter au panier", createMedicamentSelectionPanel());
+            JPanel medicamentPanel = createSectionPanel("Ajouter au panier", createMedicamentSelectionPanel());
 
             // Panel du panier
-            JPanel panierPanel = createSectionPanel("🛒 Panier", createPanierPanel());
+            JPanel panierPanel = createSectionPanel("Panier", createPanierPanel());
 
             // Panel des boutons de validation
             JPanel actionPanel = createActionPanel();
@@ -420,6 +426,9 @@ public class VentePanel extends JPanel {
         private JButton validerBtn;
         private JButton annulerBtn;
 
+        /**
+         * Construit la vue de vente sur ordonnance (saisie patient/médecin et délivrance).
+         */
         public VenteOrdonnancePanel(PharmacieController controller) {
             this.controller = controller;
             initializeComponents();
@@ -667,12 +676,18 @@ public class VentePanel extends JPanel {
         private DefaultTableModel historiqueModel;
         private JComboBox<String> filtreCombo;
         private JTextField rechercheField;
+        private JLabel statsLabel;
 
+        /**
+         * Construit la vue de l'historique des ventes (filtre, recherche, stats).
+         */
         public HistoriqueVentePanel(PharmacieController controller) {
             this.controller = controller;
             initializeComponents();
             setupLayout();
             setupEventListeners();
+            // Charger l'historique immédiatement pour afficher les stats réelles
+            rechargerHistorique();
         }
 
         private void initializeComponents() {
@@ -744,7 +759,7 @@ public class VentePanel extends JPanel {
                     new EmptyBorder(10, 15, 10, 15)
             ));
 
-            JLabel statsLabel = new JLabel("Statistiques: 0 ventes - Total: 0.00 € - Remboursé: 0.00 € - Net: 0.00 €");
+            statsLabel = new JLabel("Statistiques: 0 ventes - Total: 0.00 € - Remboursé: 0.00 € - Net: 0.00 €");
             statsLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
             statsLabel.setForeground(TEXT_COLOR);
             panel.add(statsLabel);
@@ -822,15 +837,22 @@ public class VentePanel extends JPanel {
 
             java.util.List<main.model.Transaction.TypeTransaction.Achat> achats = controller.obtenirHistoriqueVentes(debut, fin);
 
-            // Remplir le tableau
+            // Remplir le tableau et calculer les totaux
             historiqueModel.setRowCount(0);
             java.text.SimpleDateFormat dfDate = new java.text.SimpleDateFormat("yyyy-MM-dd");
             java.text.SimpleDateFormat dfHeure = new java.text.SimpleDateFormat("HH:mm:ss");
+
+            int count = 0;
+            double totalSum = 0.0;
+            double rembSum = 0.0;
+            double netSum = 0.0;
+
             for (main.model.Transaction.TypeTransaction.Achat a : achats) {
                 String type = a.getType() == main.model.Medicament.TypeAchat.ORDONNANCE ? "Ordonnance" : "Directe";
                 double total = a.getMontantTotal();
                 double remb = a.getMontantRembourse();
                 double net = total - remb;
+
                 historiqueModel.addRow(new Object[]{
                         a.getReference(),
                         dfDate.format(a.getDateTransaction()),
@@ -841,6 +863,16 @@ public class VentePanel extends JPanel {
                         String.format("%.2f €", remb),
                         String.format("%.2f €", net)
                 });
+
+                count++;
+                totalSum += total;
+                rembSum += remb;
+                netSum += net;
+            }
+
+            if (statsLabel != null) {
+                statsLabel.setText(String.format("Statistiques: %d ventes - Total: %.2f € - Remboursé: %.2f € - Net: %.2f €",
+                        count, totalSum, rembSum, netSum));
             }
         }
     }

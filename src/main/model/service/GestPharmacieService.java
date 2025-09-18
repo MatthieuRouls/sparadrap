@@ -13,6 +13,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+/**
+ * Service métier central de la pharmacie.
+ * Gère clients, médecins, mutuelles, ventes et ordonnances en mémoire (avec persistance simple des ventes).
+ */
 public class GestPharmacieService {
 
     private final Map<String, Client> clients = new ConcurrentHashMap<>();
@@ -21,366 +25,486 @@ public class GestPharmacieService {
     private final List<Achat> achats = new CopyOnWriteArrayList<>();
     private final List<Ordonnance> ordonnances = new CopyOnWriteArrayList<>();
 
+    // Mutuelle et taux génériques (utilisés pour les nouveaux clients)
+    private volatile Mutuelle mutuelleGenerique;
+    private volatile double tauxRemboursementGenerique = 70.0; // valeur par défaut; peut être ajustée via setter
+
     // Persistance simple des ventes
     private final java.io.File ventesFile = new java.io.File("data/achats.csv");
 
 
-    public void ajouterClient(Client client) {
-        SecurityValidator.validateNotNull(client, "Client");
-        if (clients.containsKey(client.getIdentifiant())) {
-            throw new IllegalArgumentException("Un client avec cet identifiant existe déjà");
-        }
-        clients.put(client.getIdentifiant(), client);
+/**
+ * Ajoute un client (clé: identifiant unique).
+ * Ne définit pas de mutuelle automatiquement.
+ */
+public void ajouterClient(Client client) {
+    SecurityValidator.validateNotNull(client, "Client");
+    if (clients.containsKey(client.getIdentifiant())) {
+        throw new IllegalArgumentException("Un client avec cet identifiant existe déjà");
     }
+    clients.put(client.getIdentifiant(), client);
+}
 
-    public int getNombreClients() {
-        return clients.size();
+/**
+ * Retourne le nombre de clients en base mémoire.
+ */
+public int getNombreClients() {
+    return clients.size();
+}
+
+/**
+ * Met à jour un client existant.
+ */
+public void modifierClient(Client client) {
+    if (client == null) {
+        throw new IllegalArgumentException("Le client ne peut pas etre null");
     }
-
-    public void modifierClient(Client client) {
-        if (client == null) {
-            throw new IllegalArgumentException("Le client ne peut pas etre null");
-        }
-        if (!clients.containsKey(client.getIdentifiant())) {
-            throw new IllegalArgumentException("Aucun client trouve avec cet identifiant");
-        }
-        clients.put(client.getIdentifiant(), client);
+    if (!clients.containsKey(client.getIdentifiant())) {
+        throw new IllegalArgumentException("Aucun client trouve avec cet identifiant");
     }
+    clients.put(client.getIdentifiant(), client);
+}
 
-    public boolean supprimerClient(String identifiant) {
-        String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
-        return clients.remove(validIdentifiant) != null;
+/**
+ * Supprime un client par identifiant.
+ *
+ * @return true si un client a été retiré
+ */
+public boolean supprimerClient(String identifiant) {
+    String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
+    return clients.remove(validIdentifiant) != null;
+}
+
+/**
+ * Recherche un client par identifiant validé.
+ */
+public Optional<Client> rechercherClient(String identifiant) {
+    if (identifiant == null || identifiant.trim().isEmpty()) {
+        return Optional.empty();
     }
+    String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
+    return Optional.ofNullable(clients.get(validIdentifiant));
+}
 
-    public Optional<Client> rechercherClient(String identifiant) {
-        if (identifiant == null || identifiant.trim().isEmpty()) {
-            return Optional.empty();
-        }
-        String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
-        return Optional.ofNullable(clients.get(validIdentifiant));
+/**
+ * Retourne tous les clients.
+ */
+public java.util.Collection<Client> getTousClients() {
+    return new ArrayList<>(clients.values());
+}
+
+/**
+ * Retourne toutes les mutuelles.
+ */
+public java.util.Collection<Mutuelle> getToutesMutuelles() {
+    return new ArrayList<>(mutuelles.values());
+}
+
+/**
+ * Génère un identifiant client unique à partir du prénom/nom.
+ */
+public String generateClientIdentifiant(String prenom, String nom) {
+    String p = prenom == null ? "" : prenom.trim();
+    String n = nom == null ? "" : nom.trim();
+    String base = (p.length() >= 2 ? p.substring(0, 2) : p)
+            + (n.length() >= 3 ? n.substring(0, 3) : n);
+    base = base.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+    if (base.isEmpty()) {
+        base = "CL";
     }
-
-    public java.util.Collection<Client> getTousClients() {
-        return new ArrayList<>(clients.values());
+    String candidate = base;
+    int suffix = 1;
+    while (clients.containsKey(candidate)) {
+        candidate = base + String.format("%02d", suffix++);
     }
+    return candidate;
+}
 
-    public String generateClientIdentifiant(String prenom, String nom) {
-        String p = prenom == null ? "" : prenom.trim();
-        String n = nom == null ? "" : nom.trim();
-        String base = (p.length() >= 2 ? p.substring(0, 2) : p)
-                + (n.length() >= 3 ? n.substring(0, 3) : n);
-        base = base.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
-        if (base.isEmpty()) {
-            base = "CL";
-        }
-        String candidate = base;
-        int suffix = 1;
-        while (clients.containsKey(candidate)) {
-            candidate = base + String.format("%02d", suffix++);
-        }
-        return candidate;
+
+/**
+ * Ajoute un médecin (clé: RPPS).
+ */
+public void ajouterMedecin(Medecin medecin) {
+    if (medecin == null) {
+        throw new IllegalArgumentException("Le medecin ne peut pas etre null");
     }
-
-
-    public void ajouterMedecin(Medecin medecin) {
-        if (medecin == null) {
-            throw new IllegalArgumentException("Le medecin ne peut pas etre null");
-        }
-        // Utiliser le numéro RPPS comme clé unique
-        String rpps = medecin.getNumeroRPPS();
-        if (rpps == null || rpps.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le numéro RPPS est requis");
-        }
-        if (medecins.containsKey(rpps)) {
-            throw new IllegalArgumentException("Un medecin avec ce numéro RPPS existe deja");
-        }
-        medecins.put(rpps, medecin);
+    String rpps = medecin.getNumeroRPPS();
+    if (rpps == null || rpps.trim().isEmpty()) {
+        throw new IllegalArgumentException("Le numéro RPPS est requis");
     }
-
-    public void modifierMedecin(Medecin medecin) {
-        if (medecin == null) {
-            throw new IllegalArgumentException("Le medecin ne peut pas etre null");
-        }
-        String rpps = medecin.getNumeroRPPS();
-        if (!medecins.containsKey(rpps)) {
-            throw new IllegalArgumentException("Aucun medecin trouve avec ce numéro RPPS");
-        }
-        medecins.put(rpps, medecin);
+    if (medecins.containsKey(rpps)) {
+        throw new IllegalArgumentException("Un medecin avec ce numéro RPPS existe deja");
     }
+    medecins.put(rpps, medecin);
+}
 
-    public boolean supprimerMedecin(String numeroRPPS) {
-        if (numeroRPPS == null || numeroRPPS.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le numéro RPPS ne peut pas etre vide");
-        }
-        return medecins.remove(numeroRPPS) != null;
+/**
+ * Met à jour un médecin existant (par RPPS).
+ */
+public void modifierMedecin(Medecin medecin) {
+    if (medecin == null) {
+        throw new IllegalArgumentException("Le medecin ne peut pas etre null");
     }
+    String rpps = medecin.getNumeroRPPS();
+    if (!medecins.containsKey(rpps)) {
+        throw new IllegalArgumentException("Aucun medecin trouve avec ce numéro RPPS");
+    }
+    medecins.put(rpps, medecin);
+}
 
-    public Optional<Medecin> rechercherMedecin(String numRPPS) {
-        if (numRPPS == null || numRPPS.trim().isEmpty()) {
-            return Optional.empty();
+/**
+ * Supprime un médecin par RPPS.
+ *
+ * @return true si un médecin a été retiré
+ */
+public boolean supprimerMedecin(String numeroRPPS) {
+    if (numeroRPPS == null || numeroRPPS.trim().isEmpty()) {
+        throw new IllegalArgumentException("Le numéro RPPS ne peut pas etre vide");
+    }
+    return medecins.remove(numeroRPPS) != null;
+}
+
+/**
+ * Recherche un médecin par RPPS.
+ */
+public Optional<Medecin> rechercherMedecin(String numRPPS) {
+    if (numRPPS == null || numRPPS.trim().isEmpty()) {
+        return Optional.empty();
+    }
+    if (medecins.containsKey(numRPPS)) {
+        return Optional.of(medecins.get(numRPPS));
+    } else {
+        return Optional.empty();
+    }
+}
+
+/**
+ * Retourne tous les médecins.
+ */
+public java.util.Collection<Medecin> getTousMedecins() {
+    return new ArrayList<>(medecins.values());
+}
+
+/**
+ * Ajoute une mutuelle.
+ */
+public void ajouterMutuelle(Mutuelle mutuelle) {
+    if (mutuelle == null) {
+        throw new IllegalArgumentException("Le mutuelle ne peut pas etre null");
+    }
+    if (mutuelles.containsKey(mutuelle.getNom())) {
+        throw new IllegalArgumentException("Cette mutuelle existe deja");
+    }
+    mutuelles.put(mutuelle.getNom(), mutuelle);
+    if ("Mutuelle Générique".equals(mutuelle.getNom())) {
+        this.mutuelleGenerique = mutuelle;
+        this.tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+    }
+}
+
+/**
+ * Met à jour une mutuelle existante.
+ */
+public void modifierMutuelle(Mutuelle mutuelle) {
+    if (mutuelle == null) {
+        throw new IllegalArgumentException("La mutuelle ne peut pas etre null");
+    }
+    if (!mutuelles.containsKey(mutuelle.getNom())) {
+        throw new IllegalArgumentException("Aucune mutuelle trouvee avec ce nom");
+    }
+    mutuelles.put(mutuelle.getNom(), mutuelle);
+    if (mutuelleGenerique != null && mutuelleGenerique.getNom().equals(mutuelle.getNom())) {
+        mutuelleGenerique = mutuelle;
+        tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+    }
+}
+
+/**
+ * Supprime une mutuelle par nom.
+ *
+ * @return true si une mutuelle a été retirée
+ */
+public boolean supprimerMutuelle(String nom) {
+    if (nom == null || nom.trim().isEmpty()) {
+        throw new IllegalArgumentException("Le nom ne peut pas etre null");
+    }
+    return mutuelles.remove(nom) != null;
+}
+
+/**
+ * Recherche une mutuelle par nom exact.
+ */
+public Optional<Mutuelle> rechercherMutuelle(String nom) {
+    if (nom == null || nom.trim().isEmpty()) {
+        return Optional.empty();
+    }
+    return Optional.ofNullable(mutuelles.get(nom.trim()));
+}
+
+/**
+ * Enregistre un achat en mémoire et persiste un résumé CSV minimal.
+ */
+public void enregistrerAchat(Achat achat) {
+    if (achat == null) {
+        throw new IllegalArgumentException("L'achat ne peut pas etre null");
+    }
+    achats.add(achat);
+    try {
+        ensureVentesStorage();
+        try (java.io.FileWriter fw = new java.io.FileWriter(ventesFile, true)) {
+            String line = String.join(",",
+                    String.valueOf(achat.getDateTransaction().getTime()),
+                    String.valueOf(achat.getMontantTotal()),
+                    String.valueOf(achat.getMontantRembourse()),
+                    achat.getType().name()
+            );
+            fw.write(line + System.lineSeparator());
         }
-        if (medecins.containsKey(numRPPS)) {
-            return Optional.of(medecins.get(numRPPS));
-        } else {
-            return Optional.empty();
+    } catch (Exception ignored) {
+        // Non bloquant si l'écriture échoue
+    }
+}
+
+/**
+ * Retourne la liste des achats entre deux dates (incluses).
+ */
+public List<Achat> getAchatsParPeriode(Date debut, Date fin) {
+    if (debut == null || fin == null) {
+        throw new IllegalArgumentException("Les dates ne peuvent pas être null");
+    }
+    if (debut.after(fin)) {
+        throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
+    }
+    return achats.stream()
+            .filter(achat -> !achat.getDateTransaction().before(debut) &&
+                    !achat.getDateTransaction().after(fin))
+            .collect(Collectors.toList());
+}
+
+/**
+ * Recherche un achat par référence exacte.
+ */
+public Optional<Achat> getAchatParReference(String reference) {
+    if (reference == null || reference.trim().isEmpty()) {
+        return Optional.empty();
+    }
+    return achats.stream()
+            .filter(a -> reference.equals(a.getReference()))
+            .findFirst();
+}
+
+/**
+ * Calcule le nombre de ventes sur une période (lecture CSV, sinon mémoire).
+ */
+public int getNombreVentesParPeriode(Date debut, Date fin) {
+    try {
+        return (int) readVentesBetween(debut, fin).count();
+    } catch (Exception e) {
+        return getAchatsParPeriode(debut, fin).size();
+    }
+}
+
+/**
+ * Retourne les achats d'un client.
+ */
+public List<Achat> getAchatsParClient(Client client) {
+    List<Achat> achatsParClient = new ArrayList<>();
+    for (Achat achat : achats) {
+        if (achat.getClient().equals(client)) {
+            achatsParClient.add(achat);
         }
     }
+    return achatsParClient;
+}
 
-    public java.util.Collection<Medecin> getTousMedecins() {
-        return new ArrayList<>(medecins.values());
-    }
-
-    public void ajouterMutuelle(Mutuelle mutuelle) {
-        if (mutuelle == null) {
-            throw new IllegalArgumentException("Le mutuelle ne peut pas etre null");
-        }
-        if (mutuelles.containsKey(mutuelle.getNom())) {
-            throw new IllegalArgumentException("Cette mutuelle existe deja");
-        }
-        mutuelles.put(mutuelle.getNom(), mutuelle);
-    }
-
-    public void modifierMutuelle(Mutuelle mutuelle) {
-        if (mutuelle == null) {
-            throw new IllegalArgumentException("La mutuelle ne peut pas etre null");
-        }
-        if (!medecins.containsKey(mutuelle.getNom())) {
-            throw new IllegalArgumentException("Aucune mutuelle trouvee avec ce nom");
-        }
-        mutuelles.put(mutuelle.getNom(), mutuelle);
-    }
-
-    public boolean supprimerMutuelle(String nom) {
-        if (nom == null || nom.trim().isEmpty()) {
-            throw new IllegalArgumentException("Le nom ne peut pas etre null");
-        }
-        return mutuelles.remove(nom) != null;
-    }
-
-    public Optional<Mutuelle> rechercherMutuelle(String nom) {
-        if (nom == null || nom.trim().isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(mutuelles.get(nom.trim()));
-    }
-
-    public void enregistrerAchat(Achat achat) {
-        if (achat == null) {
-            throw new IllegalArgumentException("L'achat ne peut pas etre null");
-        }
-        achats.add(achat);
-        // Persister la vente pour conserver l'historique entre les relances
-        try {
-            ensureVentesStorage();
-            try (java.io.FileWriter fw = new java.io.FileWriter(ventesFile, true)) {
-                String line = String.join(",",
-                        String.valueOf(achat.getDateTransaction().getTime()),
-                        String.valueOf(achat.getMontantTotal()),
-                        String.valueOf(achat.getMontantRembourse()),
-                        achat.getType().name()
-                );
-                fw.write(line + System.lineSeparator());
-            }
-        } catch (Exception ignored) {
-            // Ne pas bloquer l'appli si l'écriture échoue
-        }
-    }
-
-    public List<Achat> getAchatsParPeriode(Date debut, Date fin) {
-        if (debut == null || fin == null) {
-            throw new IllegalArgumentException("Les dates ne peuvent pas être null");
-        }
-        if (debut.after(fin)) {
-            throw new IllegalArgumentException("La date de début doit être antérieure à la date de fin");
-        }
-        // Préserver comportement existant (en mémoire)
-        return achats.stream()
-                .filter(achat -> !achat.getDateTransaction().before(debut) &&
-                        !achat.getDateTransaction().after(fin))
-                .collect(Collectors.toList());
-    }
-
-    public Optional<Achat> getAchatParReference(String reference) {
-        if (reference == null || reference.trim().isEmpty()) {
-            return Optional.empty();
-        }
-        return achats.stream()
-                .filter(a -> reference.equals(a.getReference()))
-                .findFirst();
-    }
-
-    public int getNombreVentesParPeriode(Date debut, Date fin) {
-        try {
-            return (int) readVentesBetween(debut, fin).count();
-        } catch (Exception e) {
-            // Fallback mémoire
-            return getAchatsParPeriode(debut, fin).size();
-        }
-    }
-
-    public List<Achat> getAchatsParClient(Client client) {
-        List<Achat> achatsParClient = new ArrayList<>();
-        for (Achat achat : achats) {
-            if (achat.getClient().equals(client)) {
-                achatsParClient.add(achat);
-            }
-        }
-        return achatsParClient;
-    }
-
-    public List<Achat> getAchatsParMedecin(Medecin medecin) {
-        SecurityValidator.validateNotNull(medecin, "Médecin");
-        return achats.stream()
-                .filter(achat -> {
-                    // Vérifier si l'achat est lié à une ordonnance de ce médecin
-                    List<Ordonnance> ordonnancesMedecin = getOrdonnancesParMedecin(medecin);
-                    for (Ordonnance ord : ordonnancesMedecin) {
-                        if (achat.getReference().contains(ord.getReference()) ||
-                                achat.getDateTransaction().equals(ord.getDateCreation())) {
-                            return true;
-                        }
+/**
+ * Retourne les achats associés à un médecin (via correspondance avec ordonnances).
+ */
+public List<Achat> getAchatsParMedecin(Medecin medecin) {
+    SecurityValidator.validateNotNull(medecin, "Médecin");
+    return achats.stream()
+            .filter(achat -> {
+                List<Ordonnance> ordonnancesMedecin = getOrdonnancesParMedecin(medecin);
+                for (Ordonnance ord : ordonnancesMedecin) {
+                    if (achat.getReference().contains(ord.getReference()) ||
+                            achat.getDateTransaction().equals(ord.getDateCreation())) {
+                        return true;
                     }
-                    return false;
-                })
-                .collect(Collectors.toList());
-    }
+                }
+                return false;
+            })
+            .collect(Collectors.toList());
+}
 
-    public void enregistrerOrdonnance(Ordonnance ordonnance) {
-        ordonnances.add(ordonnance);
-    }
+/**
+ * Enregistre une ordonnance.
+ */
+public void enregistrerOrdonnance(Ordonnance ordonnance) {
+    ordonnances.add(ordonnance);
+}
 
-    public List<Ordonnance> getOrdonnancesParClient(Client client) {
-        SecurityValidator.validateNotNull(client, "Client");
-        List<Ordonnance> ordonnancesParClient = new ArrayList<>();
-        for (Ordonnance ordonnance : ordonnances) {
-            if (ordonnance.getPatient().equals(client)) {
-                ordonnancesParClient.add(ordonnance);
-            }
-        }
-        return ordonnancesParClient;
-    }
-
-    public List<Ordonnance> getOrdonnancesParMedecin(Medecin medecin) {
-        SecurityValidator.validateNotNull(medecin, "Médecin");
-        return ordonnances.stream()
-                .filter(ordonnance -> ordonnance.getMedecin().equals(medecin))
-                .collect(Collectors.toList());
-    }
-
-    public List<Ordonnance> getToutesLesOrdonnances() {
-        return new ArrayList<>(ordonnances);
-    }
-
-    public Optional<Ordonnance> rechercherOrdonnance(String reference) {
-        if (reference == null || reference.trim().isEmpty()) {
-            return Optional.empty();
-        }
-
-        return ordonnances.stream()
-                .filter(ordonnance -> ordonnance.getReference().equals(reference.trim()))
-                .findFirst();
-    }
-
-    public double calculerMontantRembourse(Date debut, Date fin) {
-        try {
-            return readVentesBetween(debut, fin)
-                    .mapToDouble(r -> r.montantRembourse)
-                    .sum();
-        } catch (Exception e) {
-            return getAchatsParPeriode(debut, fin).stream()
-                    .mapToDouble(Achat::getMontantRembourse)
-                    .sum();
+/**
+ * Liste les ordonnances d'un client.
+ */
+public List<Ordonnance> getOrdonnancesParClient(Client client) {
+    SecurityValidator.validateNotNull(client, "Client");
+    List<Ordonnance> ordonnancesParClient = new ArrayList<>();
+    for (Ordonnance ordonnance : ordonnances) {
+        if (ordonnance.getPatient().equals(client)) {
+            ordonnancesParClient.add(ordonnance);
         }
     }
+    return ordonnancesParClient;
+}
 
-    public Map<String, Double> getStatistiquesRemboursementMutuelle(Mutuelle mutuelle, Date debut, Date fin) {
-        SecurityValidator.validateNotNull(mutuelle, "Mutuelle");
+/**
+ * Liste les ordonnances d'un médecin.
+ */
+public List<Ordonnance> getOrdonnancesParMedecin(Medecin medecin) {
+    SecurityValidator.validateNotNull(medecin, "Médecin");
+    return ordonnances.stream()
+            .filter(ordonnance -> ordonnance.getMedecin().equals(medecin))
+            .collect(Collectors.toList());
+}
 
-        List<Achat> achatsAvecMutuelle = getAchatsParPeriode(debut, fin).stream()
-                .filter(achat -> achat.getClient().getMutuelle() != null &&
-                        achat.getClient().getMutuelle().equals(mutuelle))
-                .collect(Collectors.toList());
+/**
+ * Retourne toutes les ordonnances en mémoire.
+ */
+public List<Ordonnance> getToutesLesOrdonnances() {
+    return new ArrayList<>(ordonnances);
+}
 
-        double totalAchats = achatsAvecMutuelle.stream()
-                .mapToDouble(Achat::getMontantTotal)
+/**
+ * Recherche une ordonnance par référence exacte.
+ */
+public Optional<Ordonnance> rechercherOrdonnance(String reference) {
+    if (reference == null || reference.trim().isEmpty()) {
+        return Optional.empty();
+    }
+
+    return ordonnances.stream()
+            .filter(ordonnance -> ordonnance.getReference().equals(reference.trim()))
+            .findFirst();
+}
+
+/**
+ * Calcule la somme des montants remboursés sur une période.
+ */
+public double calculerMontantRembourse(Date debut, Date fin) {
+    try {
+        return readVentesBetween(debut, fin)
+                .mapToDouble(r -> r.montantRembourse)
                 .sum();
-
-        double totalRembourse = achatsAvecMutuelle.stream()
+    } catch (Exception e) {
+        return getAchatsParPeriode(debut, fin).stream()
                 .mapToDouble(Achat::getMontantRembourse)
                 .sum();
-
-        Map<String, Double> stats = new HashMap<>();
-        stats.put("totalAchats", totalAchats);
-        stats.put("totalRembourse", totalRembourse);
-        stats.put("nombreAchats", (double) achatsAvecMutuelle.size());
-        stats.put("tauxRemboursementEffectif", totalAchats > 0 ? (totalRembourse / totalAchats) * 100 : 0);
-
-        return stats;
     }
+}
 
-    public List<String> verifierCoherenceOrdonnancesAchats() {
-        List<String> problemes = new ArrayList<>();
+/**
+ * Statistiques de remboursement pour une mutuelle donnée sur une période.
+ */
+public Map<String, Double> getStatistiquesRemboursementMutuelle(Mutuelle mutuelle, Date debut, Date fin) {
+    SecurityValidator.validateNotNull(mutuelle, "Mutuelle");
 
-        for (Ordonnance ordonnance : ordonnances) {
-            // Rechercher l'achat correspondant
-            boolean achatTrouve = achats.stream()
-                    .anyMatch(achat ->
-                            achat.getClient().equals(ordonnance.getPatient()) &&
-                                    achat.getDateTransaction().equals(ordonnance.getDateCreation()) &&
-                                    achat.getType() == TypeAchat.ORDONNANCE
-                    );
+    List<Achat> achatsAvecMutuelle = getAchatsParPeriode(debut, fin).stream()
+            .filter(achat -> achat.getClient().getMutuelle() != null &&
+                    achat.getClient().getMutuelle().equals(mutuelle))
+            .collect(Collectors.toList());
 
-            if (!achatTrouve) {
-                problemes.add("Ordonnance " + ordonnance.getReference() +
-                        " sans achat correspondant");
-            }
+    double totalAchats = achatsAvecMutuelle.stream()
+            .mapToDouble(Achat::getMontantTotal)
+            .sum();
+
+    double totalRembourse = achatsAvecMutuelle.stream()
+            .mapToDouble(Achat::getMontantRembourse)
+            .sum();
+
+    Map<String, Double> stats = new HashMap<>();
+    stats.put("totalAchats", totalAchats);
+    stats.put("totalRembourse", totalRembourse);
+    stats.put("nombreAchats", (double) achatsAvecMutuelle.size());
+    stats.put("tauxRemboursementEffectif", totalAchats > 0 ? (totalRembourse / totalAchats) * 100 : 0);
+
+    return stats;
+}
+
+/**
+ * Vérifie la cohérence entre ordonnances et achats associés.
+ * Retourne la liste des problèmes détectés.
+ */
+public List<String> verifierCoherenceOrdonnancesAchats() {
+    List<String> problemes = new ArrayList<>();
+
+    for (Ordonnance ordonnance : ordonnances) {
+        boolean achatTrouve = achats.stream()
+                .anyMatch(achat ->
+                        achat.getClient().equals(ordonnance.getPatient()) &&
+                                achat.getDateTransaction().equals(ordonnance.getDateCreation()) &&
+                                achat.getType() == TypeAchat.ORDONNANCE
+                );
+
+        if (!achatTrouve) {
+            problemes.add("Ordonnance " + ordonnance.getReference() +
+                    " sans achat correspondant");
         }
-
-        return problemes;
     }
 
-    public double calculerChiffreAffaires(Date debut, Date fin) {
-        try {
-            return readVentesBetween(debut, fin)
-                    .mapToDouble(r -> r.montantTotal)
-                    .sum();
-        } catch (Exception e) {
-            return getAchatsParPeriode(debut, fin).stream().mapToDouble(Achat::getMontantTotal).sum();
-        }
-    }
+    return problemes;
+}
 
-    private void ensureVentesStorage() throws java.io.IOException {
-        java.io.File dir = ventesFile.getParentFile();
-        if (dir != null && !dir.exists()) {
-            dir.mkdirs();
-        }
-        if (!ventesFile.exists()) {
-            ventesFile.createNewFile();
-        }
+/**
+ * Calcule le chiffre d'affaires sur la période.
+ */
+public double calculerChiffreAffaires(Date debut, Date fin) {
+    try {
+        return readVentesBetween(debut, fin)
+                .mapToDouble(r -> r.montantTotal)
+                .sum();
+    } catch (Exception e) {
+        return getAchatsParPeriode(debut, fin).stream().mapToDouble(Achat::getMontantTotal).sum();
     }
+}
 
-    private java.util.stream.Stream<SaleRecord> readVentesBetween(Date debut, Date fin) throws java.io.IOException {
-        ensureVentesStorage();
-        java.nio.file.Path path = ventesFile.toPath();
-        final long start = debut.getTime();
-        final long end = fin.getTime();
-        return java.nio.file.Files.lines(path)
-                .filter(line -> !line.trim().isEmpty())
-                .map(line -> line.split(","))
-                .filter(parts -> parts.length >= 3)
-                .map(parts -> {
-                    try {
-                        long ts = Long.parseLong(parts[0]);
-                        double total = Double.parseDouble(parts[1]);
-                        double rembourse = Double.parseDouble(parts[2]);
-                        return new SaleRecord(ts, total, rembourse);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .filter(r -> r.timestamp >= start && r.timestamp <= end);
+/**
+ * S'assure que le fichier des ventes existe (création dossier/fichier si nécessaire).
+ */
+private void ensureVentesStorage() throws java.io.IOException {
+    java.io.File dir = ventesFile.getParentFile();
+    if (dir != null && !dir.exists()) {
+        dir.mkdirs();
     }
+    if (!ventesFile.exists()) {
+        ventesFile.createNewFile();
+    }
+}
+
+/**
+ * Lit les enregistrements CSV de ventes dans un intervalle [debut, fin].
+ */
+private java.util.stream.Stream<SaleRecord> readVentesBetween(Date debut, Date fin) throws java.io.IOException {
+    ensureVentesStorage();
+    java.nio.file.Path path = ventesFile.toPath();
+    final long start = debut.getTime();
+    final long end = fin.getTime();
+    return java.nio.file.Files.lines(path)
+            .filter(line -> !line.trim().isEmpty())
+            .map(line -> line.split(","))
+            .filter(parts -> parts.length >= 3)
+            .map(parts -> {
+                try {
+                    long ts = Long.parseLong(parts[0]);
+                    double total = Double.parseDouble(parts[1]);
+                    double rembourse = Double.parseDouble(parts[2]);
+                    return new SaleRecord(ts, total, rembourse);
+                } catch (Exception e) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .filter(r -> r.timestamp >= start && r.timestamp <= end);
+}
 
     private static class SaleRecord {
         final long timestamp;

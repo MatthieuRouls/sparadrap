@@ -2,6 +2,7 @@ package main.view;
 
 import main.controller.PharmacieController;
 import main.model.Personne.CategoriePersonne.Client;
+import main.model.Organisme.TypeOrganisme.Mutuelle;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -34,8 +35,13 @@ public class ClientPanel extends JPanel {
     // Formulaire
     private JTextField nomField, prenomField, adresseField, codePostalField;
     private JTextField villeField, telephoneField, emailField, identifiantField, numeroSecuField;
+    private JComboBox<String> mutuelleCombo; // sélection facultative d'une mutuelle
+    private JComboBox<String> medecinCombo;  // sélection du médecin traitant (RPPS ou "Aucun")
     private boolean editingClient = false;
 
+    /**
+     * Construit le panel de gestion des clients (UI, événements, styles).
+     */
     public ClientPanel(PharmacieController controller, PharmacieMainFrame mainFrame) {
         this.controller = controller;
         this.mainFrame = mainFrame;
@@ -91,6 +97,24 @@ public class ClientPanel extends JPanel {
         emailField = createStyledTextField();
         identifiantField = createStyledTextField();
         numeroSecuField = createStyledTextField();
+        // Combo mutuelles (optionnelle, avec entrée "Aucune")
+        mutuelleCombo = new JComboBox<>();
+        mutuelleCombo.addItem("Aucune");
+        try {
+            for (Mutuelle m : controller.getToutesMutuelles()) {
+                mutuelleCombo.addItem(m.getNom());
+            }
+        } catch (Exception ignore) {}
+
+        // Combo médecins (médecin traitant)
+        medecinCombo = new JComboBox<>();
+        medecinCombo.addItem("Aucun");
+        try {
+            for (main.model.Personne.CategoriePersonne.Medecin md : controller.getTousMedecins()) {
+                // Affiche "RPPS - NOM Prénom"
+                medecinCombo.addItem(md.getNumeroRPPS() + " - " + md.getNom() + " " + md.getPrenom());
+            }
+        } catch (Exception ignore) {}
     }
 
     private void setupLayout() {
@@ -189,6 +213,20 @@ public class ClientPanel extends JPanel {
         addFormField(formPanel, gbc, "Code Postal :", codePostalField, 7);
         addFormField(formPanel, gbc, "Ville :", villeField, 8);
 
+        // Ligne 6 (Mutuelle optionnelle)
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 1;
+        formPanel.add(new JLabel("Mutuelle :"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(mutuelleCombo, gbc);
+
+        // Ligne 7 (Médecin traitant)
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0; gbc.gridy = 10; gbc.gridwidth = 1;
+        formPanel.add(new JLabel("Médecin traitant :"), gbc);
+        gbc.gridx = 1; gbc.gridwidth = 2; gbc.fill = GridBagConstraints.HORIZONTAL;
+        formPanel.add(medecinCombo, gbc);
+
         detailsPanel.add(formPanel);
         detailsPanel.add(Box.createVerticalStrut(20));
 
@@ -262,6 +300,17 @@ public class ClientPanel extends JPanel {
         clientsTable.setIntercellSpacing(new Dimension(1, 1));
         clientsTable.setSelectionBackground(new Color(PRIMARY_COLOR.getRed(), PRIMARY_COLOR.getGreen(), PRIMARY_COLOR.getBlue(), 50));
         clientsTable.getTableHeader().setBackground(new Color(250, 250, 250));
+    }
+
+    /**
+     * Place le focus dans le champ de recherche clients.
+     */
+    public void focusRecherche() {
+        SwingUtilities.invokeLater(() -> {
+            if (rechercheField != null) {
+                rechercheField.requestFocusInWindow();
+            }
+        });
     }
 
     private JButton createStyledButton(String iconPath, String text, Color color) {
@@ -387,6 +436,13 @@ public class ClientPanel extends JPanel {
         emailField.setText(client.getEmail());
         identifiantField.setText(client.getIdentifiant());
         numeroSecuField.setText(client.getNumeroSecuriteSocial());
+
+        // Sélectionner le médecin traitant dans la combo si présent
+        String target = "Aucun";
+        if (client.getMedecinTraitant() != null) {
+            target = client.getMedecinTraitant().getNumeroRPPS() + " - " + client.getMedecinTraitant().getNom() + " " + client.getMedecinTraitant().getPrenom();
+        }
+        medecinCombo.setSelectedItem(target);
     }
 
     private void viderFormulaire() {
@@ -460,6 +516,15 @@ public class ClientPanel extends JPanel {
                     client.setEmail(emailField.getText().trim());
                     client.setNumeroSecuriteSocial(numeroSecuField.getText().trim());
 
+                    // Mise à jour médecin traitant
+                    String selectionMed = (String) medecinCombo.getSelectedItem();
+                    String rpps = null;
+                    if (selectionMed != null && !selectionMed.equals("Aucun")) {
+                        int idx = selectionMed.indexOf(" - ");
+                        if (idx > 0) rpps = selectionMed.substring(0, idx).trim();
+                    }
+                    controller.assignerMedecinClient(client.getIdentifiant(), rpps);
+
                     resultat = controller.modifierClient(client);
 
                     // NOUVEAU : Déclencher l'événement de modification
@@ -478,6 +543,7 @@ public class ClientPanel extends JPanel {
                             .generateClientIdentifiant(prenomField.getText().trim(), nomField.getText().trim());
                     identifiantField.setText(identifiantGenere);
                 }
+                String choixMutuelle = (String) mutuelleCombo.getSelectedItem();
                 resultat = controller.ajouterClient(
                         nomField.getText().trim(),
                         prenomField.getText().trim(),
@@ -487,8 +553,20 @@ public class ClientPanel extends JPanel {
                         telephoneField.getText().trim(),
                         emailField.getText().trim(),
                         identifiantGenere,
-                        numeroSecuField.getText().trim()
+                        numeroSecuField.getText().trim(),
+                        choixMutuelle
                 );
+
+                // Associer le médecin traitant si sélectionné
+                String selectionMed = (String) medecinCombo.getSelectedItem();
+                String rpps = null;
+                if (selectionMed != null && !selectionMed.equals("Aucun")) {
+                    int idx = selectionMed.indexOf(" - ");
+                    if (idx > 0) rpps = selectionMed.substring(0, idx).trim();
+                }
+                if (rpps != null && !rpps.isEmpty()) {
+                    controller.assignerMedecinClient(identifiantGenere, rpps);
+                }
 
                 if (!resultat.contains("Erreur")) {
                     DataEventManager.ClientEvents.clientAdded();

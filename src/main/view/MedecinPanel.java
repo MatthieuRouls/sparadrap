@@ -34,6 +34,9 @@ public class MedecinPanel extends JPanel {
     private JTextField nomField, prenomField, adresseField, codePostalField;
     private JTextField villeField, telephoneField, emailField, numeroRPPSField, identifiantField;
 
+    /**
+     * Construit le panel de gestion des médecins (UI, événements, styles).
+     */
     public MedecinPanel(PharmacieController controller) {
         this.controller = controller;
         initializeComponents();
@@ -127,6 +130,9 @@ public class MedecinPanel extends JPanel {
         JButton afficherTousBtn = createStyledButton("icons/users-alt.png", "Afficher tous", PRIMARY_COLOR);
         afficherTousBtn.addActionListener(e -> rechargerTousMedecins());
         buttonsPanel.add(afficherTousBtn);
+        JButton ordonnancesParMedBtn = createStyledButton("icons/list.png", "Ordonnances par médecin", PRIMARY_COLOR);
+        ordonnancesParMedBtn.addActionListener(e -> afficherOrdonnancesParMedecinSelectionne());
+        buttonsPanel.add(ordonnancesParMedBtn);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.setBackground(BACKGROUND_COLOR);
@@ -236,6 +242,16 @@ public class MedecinPanel extends JPanel {
                 chargerMedecinSelectionne();
             }
         });
+
+        // Double-clic sur un médecin -> afficher ses ordonnances
+        medecinsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && medecinsTable.getSelectedRow() != -1) {
+                    afficherOrdonnancesParMedecinSelectionne();
+                }
+            }
+        });
     }
 
     private void setupStyles() {
@@ -332,6 +348,33 @@ public class MedecinPanel extends JPanel {
         afficherMessage("Liste des médecins chargée", false);
     }
 
+    private void afficherOrdonnancesParMedecinSelectionne() {
+        int selectedRow = medecinsTable.getSelectedRow();
+        if (selectedRow < 0) {
+            afficherMessage("Sélectionnez un médecin", true);
+            return;
+        }
+        String rpps = (String) tableModel.getValueAt(selectedRow, 0);
+        java.util.List<main.model.Document.TypeDocument.Ordonnance> ordos = controller.obtenirOrdonnancesParMedecin(rpps);
+        if (ordos.isEmpty()) {
+            afficherMessage("Aucune ordonnance trouvée pour ce médecin", false);
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+        for (main.model.Document.TypeDocument.Ordonnance o : ordos) {
+            sb.append(String.format("- %s | %s | Patient: %s %s | Total: %.2f €%n",
+                    o.getReference(), df.format(o.getDateCreation()),
+                    o.getPatient().getNom(), o.getPatient().getPrenom(), o.getMontantTotal()));
+        }
+        JTextArea area = new JTextArea(sb.toString());
+        area.setEditable(false);
+        area.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        area.setBorder(new EmptyBorder(10,10,10,10));
+        JOptionPane.showMessageDialog(this, new JScrollPane(area),
+                "Ordonnances du médecin " + rpps, JOptionPane.INFORMATION_MESSAGE);
+    }
+
     private void ajouterMedecinATable(Medecin medecin) {
         Object[] row = {
                 medecin.getNumeroRPPS(),
@@ -367,6 +410,12 @@ public class MedecinPanel extends JPanel {
         emailField.setText(medecin.getEmail());
         numeroRPPSField.setText(medecin.getNumeroRPPS());
         identifiantField.setText(medecin.getIdentifiant());
+
+        // Afficher le nombre d'ordonnances de ce médecin (info rapide)
+        try {
+            int nbOrdos = controller.obtenirOrdonnancesParMedecin(medecin.getNumeroRPPS()).size();
+            afficherMessage("Ordonnances de ce médecin : " + nbOrdos, false);
+        } catch (Exception ignore) {}
     }
 
     private void viderFormulaire() {
