@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Propriétés de configuration -->
+    <property name="LOG_DIR" value="logs" />
+    <property name="APP_NAME" value="sparadrap" />
+
+    <!-- Pattern pour la console (avec couleurs) -->
+    <property name="CONSOLE_PATTERN"
+              value="%d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n" />
+
+    <!-- Pattern pour le fichier (sans couleurs) -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n" />
+
+    <!-- ========================================= -->
+    <!-- APPENDER CONSOLE                          -->
+    <!-- ========================================= -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <!-- Filtre : seulement DEBUG et au-dessus -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <!-- ========================================= -->
+    <!-- APPENDER FICHIER (avec rotation)          -->
+    <!-- ========================================= -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Fichier actif -->
+        <file>${LOG_DIR}/${APP_NAME}.log</file>
+
+        <!-- Politique de rotation -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Nom des fichiers archivés (par jour) -->
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- Conservation de 30 jours d'historique -->
+            <maxHistory>30</maxHistory>
+
+            <!-- Taille maximale totale des logs (500 MB) -->
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+
+        <!-- Format des logs dans le fichier -->
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ========================================= -->
+    <!-- APPENDER FICHIER ERREURS UNIQUEMENT       -->
+    <!-- ========================================= -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${APP_NAME}-errors.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}-errors-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+
+        <!-- Filtre : seulement ERROR et FATAL -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <!-- ========================================= -->
+    <!-- LOGGERS SPÉCIFIQUES PAR PACKAGE           -->
+    <!-- ========================================= -->
+
+    <!-- Logger pour la base de données (plus verbeux) -->
+    <logger name="main.model.database" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </logger>
+
+    <!-- Logger pour les services -->
+    <logger name="main.model.service" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </logger>
+
+    <!-- Logger pour les contrôleurs -->
+    <logger name="main.controller" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </logger>
+
+    <!-- Logger pour les vues -->
+    <logger name="main.view" level="WARN" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </logger>
+
+    <!-- Logger pour HikariCP (pool de connexions) -->
+    <logger name="com.zaxxer.hikari" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- Logger pour MySQL JDBC -->
+    <logger name="com.mysql.cj" level="WARN" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <!-- ========================================= -->
+    <!-- LOGGER RACINE (par défaut)                -->
+    <!-- ========================================= -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </root>
+
+</configuration>

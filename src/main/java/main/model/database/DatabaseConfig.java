@@ -1,5 +1,8 @@
 package main.model.database;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -9,6 +12,7 @@ import java.util.Properties;
  * Charge les paramètres depuis le fichier database.properties.
  */
 public class DatabaseConfig {
+    private static final Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
     private static final String CONFIG_FILE = "database.properties";
     private static DatabaseConfig instance;
     private final Properties properties;
@@ -34,15 +38,17 @@ public class DatabaseConfig {
     private void loadProperties() {
         try (InputStream input = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             if (input == null) {
-                System.err.println("Impossible de trouver " + CONFIG_FILE);
+                logger.warn("Fichier {} non trouvé, utilisation des valeurs par défaut", CONFIG_FILE);
                 // Utiliser des valeurs par défaut
                 setDefaultProperties();
                 return;
             }
             properties.load(input);
-            System.out.println("Configuration de la base de données chargée avec succès.");
+            logger.info("Configuration de la base de données chargée avec succès depuis {}", CONFIG_FILE);
+            logger.debug("URL: {}, Username: {}", getUrl(), getUsername());
         } catch (IOException e) {
-            System.err.println("Erreur lors du chargement de la configuration: " + e.getMessage());
+            logger.error("Erreur lors du chargement de la configuration: {}", e.getMessage(), e);
+            logger.warn("Utilisation de la configuration par défaut");
             setDefaultProperties();
         }
     }
