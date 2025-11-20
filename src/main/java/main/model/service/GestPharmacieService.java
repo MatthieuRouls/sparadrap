@@ -6,22 +6,32 @@ import main.model.Organisme.TypeOrganisme.Mutuelle;
 import main.model.Personne.CategoriePersonne.Client;
 import main.model.Personne.CategoriePersonne.Medecin;
 import main.model.Transaction.TypeTransaction.Achat;
+import main.model.dao.ClientDAO;
+import main.model.dao.MedecinDAO;
+import main.model.dao.MutuelleDAO;
 import main.model.security.SecurityValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
  * Service métier central de la pharmacie.
- * Gère clients, médecins, mutuelles, ventes et ordonnances en mémoire (avec persistance simple des ventes).
+ * Gère clients, médecins, mutuelles avec persistance en base de données MySQL.
+ * Les ventes et ordonnances restent en mémoire pour l'instant.
  */
 public class GestPharmacieService {
+    private static final Logger logger = LoggerFactory.getLogger(GestPharmacieService.class);
 
-    private final Map<String, Client> clients = new ConcurrentHashMap<>();
-    private final Map<String, Medecin> medecins = new ConcurrentHashMap<>();
-    private final Map<String, Mutuelle> mutuelles = new ConcurrentHashMap<>();
+    // DAO pour la persistance en base de données
+    private final ClientDAO clientDAO;
+    private final MedecinDAO medecinDAO;
+    private final MutuelleDAO mutuelleDAO;
+
+    // Listes en mémoire (pour achats et ordonnances - à migrer plus tard si nécessaire)
     private final List<Achat> achats = new CopyOnWriteArrayList<>();
     private final List<Ordonnance> ordonnances = new CopyOnWriteArrayList<>();
 
@@ -32,37 +42,72 @@ public class GestPharmacieService {
     // Persistance simple des ventes
     private final java.io.File ventesFile = new java.io.File("data/achats.csv");
 
+    public GestPharmacieService() {
+        this.clientDAO = new ClientDAO();
+        this.medecinDAO = new MedecinDAO();
+        this.mutuelleDAO = new MutuelleDAO();
+        logger.info("GestPharmacieService initialisé avec persistance base de données");
+    }
+
 
 /**
  * Ajoute un client (clé: identifiant unique).
- * Ne définit pas de mutuelle automatiquement.
+ * Persiste le client en base de données.
  */
 public void ajouterClient(Client client) {
     SecurityValidator.validateNotNull(client, "Client");
-    if (clients.containsKey(client.getIdentifiant())) {
-        throw new IllegalArgumentException("Un client avec cet identifiant existe déjà");
+    logger.info("Ajout du client: {}", client.getIdentifiant());
+
+    try {
+        // Vérifier si le client existe déjà
+        if (clientDAO.findByIdentifiant(client.getIdentifiant()).isPresent()) {
+            throw new IllegalArgumentException("Un client avec cet identifiant existe déjà");
+        }
+
+        clientDAO.create(client);
+        logger.info("Client '{}' ajouté avec succès en base de données", client.getIdentifiant());
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de l'ajout du client: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de l'ajout du client en base de données", e);
     }
-    clients.put(client.getIdentifiant(), client);
 }
 
 /**
- * Retourne le nombre de clients en base mémoire.
+ * Retourne le nombre de clients en base de données.
  */
 public int getNombreClients() {
-    return clients.size();
+    try {
+        int count = clientDAO.findAll().size();
+        logger.debug("Nombre de clients: {}", count);
+        return count;
+    } catch (SQLException e) {
+        logger.error("Erreur lors du comptage des clients: {}", e.getMessage(), e);
+        return 0;
+    }
 }
 
 /**
- * Met à jour un client existant.
+ * Met à jour un client existant en base de données.
  */
 public void modifierClient(Client client) {
     if (client == null) {
         throw new IllegalArgumentException("Le client ne peut pas etre null");
     }
-    if (!clients.containsKey(client.getIdentifiant())) {
-        throw new IllegalArgumentException("Aucun client trouve avec cet identifiant");
+    logger.info("Modification du client: {}", client.getIdentifiant());
+
+    try {
+        if (clientDAO.findByIdentifiant(client.getIdentifiant()).isEmpty()) {
+            throw new IllegalArgumentException("Aucun client trouve avec cet identifiant");
+        }
+
+        clientDAO.update(client);
+        logger.info("Client '{}' modifié avec succès", client.getIdentifiant());
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la modification du client: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la modification du client en base de données", e);
     }
-    clients.put(client.getIdentifiant(), client);
 }
 
 /**
@@ -72,7 +117,21 @@ public void modifierClient(Client client) {
  */
 public boolean supprimerClient(String identifiant) {
     String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
-    return clients.remove(validIdentifiant) != null;
+    logger.info("Suppression du client: {}", validIdentifiant);
+
+    try {
+        boolean deleted = clientDAO.delete(validIdentifiant);
+        if (deleted) {
+            logger.info("Client '{}' supprimé avec succès", validIdentifiant);
+        } else {
+            logger.warn("Aucun client trouvé pour suppression: {}", validIdentifiant);
+        }
+        return deleted;
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la suppression du client: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la suppression du client en base de données", e);
+    }
 }
 
 /**
@@ -83,21 +142,42 @@ public Optional<Client> rechercherClient(String identifiant) {
         return Optional.empty();
     }
     String validIdentifiant = SecurityValidator.validateIdentifiant(identifiant);
-    return Optional.ofNullable(clients.get(validIdentifiant));
+    logger.debug("Recherche du client: {}", validIdentifiant);
+
+    try {
+        return clientDAO.findByIdentifiant(validIdentifiant);
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la recherche du client: {}", e.getMessage(), e);
+        return Optional.empty();
+    }
 }
 
 /**
- * Retourne tous les clients.
+ * Retourne tous les clients depuis la base de données.
  */
 public java.util.Collection<Client> getTousClients() {
-    return new ArrayList<>(clients.values());
+    try {
+        List<Client> clients = clientDAO.findAll();
+        logger.debug("Récupération de {} clients", clients.size());
+        return clients;
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la récupération des clients: {}", e.getMessage(), e);
+        return new ArrayList<>();
+    }
 }
 
 /**
- * Retourne toutes les mutuelles.
+ * Retourne toutes les mutuelles depuis la base de données.
  */
 public java.util.Collection<Mutuelle> getToutesMutuelles() {
-    return new ArrayList<>(mutuelles.values());
+    try {
+        List<Mutuelle> mutuelles = mutuelleDAO.findAll();
+        logger.debug("Récupération de {} mutuelles", mutuelles.size());
+        return mutuelles;
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la récupération des mutuelles: {}", e.getMessage(), e);
+        return new ArrayList<>();
+    }
 }
 
 /**
@@ -114,15 +194,22 @@ public String generateClientIdentifiant(String prenom, String nom) {
     }
     String candidate = base;
     int suffix = 1;
-    while (clients.containsKey(candidate)) {
-        candidate = base + String.format("%02d", suffix++);
+
+    try {
+        // Vérifier l'unicité en base de données
+        while (clientDAO.findByIdentifiant(candidate).isPresent()) {
+            candidate = base + String.format("%02d", suffix++);
+        }
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la génération de l'identifiant: {}", e.getMessage(), e);
     }
+
     return candidate;
 }
 
 
 /**
- * Ajoute un médecin (clé: RPPS).
+ * Ajoute un médecin en base de données.
  */
 public void ajouterMedecin(Medecin medecin) {
     if (medecin == null) {
@@ -132,36 +219,69 @@ public void ajouterMedecin(Medecin medecin) {
     if (rpps == null || rpps.trim().isEmpty()) {
         throw new IllegalArgumentException("Le numéro RPPS est requis");
     }
-    if (medecins.containsKey(rpps)) {
-        throw new IllegalArgumentException("Un medecin avec ce numéro RPPS existe deja");
+    logger.info("Ajout du médecin: {} {} (RPPS: {})", medecin.getPrenom(), medecin.getNom(), rpps);
+
+    try {
+        if (medecinDAO.findByRPPS(rpps).isPresent()) {
+            throw new IllegalArgumentException("Un medecin avec ce numéro RPPS existe deja");
+        }
+
+        medecinDAO.create(medecin);
+        logger.info("Médecin '{}' ajouté avec succès en base de données", medecin.getIdentifiant());
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de l'ajout du médecin: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de l'ajout du médecin en base de données", e);
     }
-    medecins.put(rpps, medecin);
 }
 
 /**
- * Met à jour un médecin existant (par RPPS).
+ * Met à jour un médecin existant en base de données.
  */
 public void modifierMedecin(Medecin medecin) {
     if (medecin == null) {
         throw new IllegalArgumentException("Le medecin ne peut pas etre null");
     }
-    String rpps = medecin.getNumeroRPPS();
-    if (!medecins.containsKey(rpps)) {
-        throw new IllegalArgumentException("Aucun medecin trouve avec ce numéro RPPS");
+    logger.info("Modification du médecin: {}", medecin.getIdentifiant());
+
+    try {
+        if (medecinDAO.findByIdentifiant(medecin.getIdentifiant()).isEmpty()) {
+            throw new IllegalArgumentException("Aucun medecin trouve avec cet identifiant");
+        }
+
+        medecinDAO.update(medecin);
+        logger.info("Médecin '{}' modifié avec succès", medecin.getIdentifiant());
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la modification du médecin: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la modification du médecin en base de données", e);
     }
-    medecins.put(rpps, medecin);
 }
 
 /**
- * Supprime un médecin par RPPS.
+ * Supprime un médecin par identifiant.
  *
  * @return true si un médecin a été retiré
  */
-public boolean supprimerMedecin(String numeroRPPS) {
-    if (numeroRPPS == null || numeroRPPS.trim().isEmpty()) {
-        throw new IllegalArgumentException("Le numéro RPPS ne peut pas etre vide");
+public boolean supprimerMedecin(String identifiant) {
+    if (identifiant == null || identifiant.trim().isEmpty()) {
+        throw new IllegalArgumentException("L'identifiant ne peut pas etre vide");
     }
-    return medecins.remove(numeroRPPS) != null;
+    logger.info("Suppression du médecin: {}", identifiant);
+
+    try {
+        boolean deleted = medecinDAO.delete(identifiant);
+        if (deleted) {
+            logger.info("Médecin '{}' supprimé avec succès", identifiant);
+        } else {
+            logger.warn("Aucun médecin trouvé pour suppression: {}", identifiant);
+        }
+        return deleted;
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la suppression du médecin: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la suppression du médecin en base de données", e);
+    }
 }
 
 /**
@@ -171,51 +291,83 @@ public Optional<Medecin> rechercherMedecin(String numRPPS) {
     if (numRPPS == null || numRPPS.trim().isEmpty()) {
         return Optional.empty();
     }
-    if (medecins.containsKey(numRPPS)) {
-        return Optional.of(medecins.get(numRPPS));
-    } else {
+    logger.debug("Recherche du médecin par RPPS: {}", numRPPS);
+
+    try {
+        return medecinDAO.findByRPPS(numRPPS);
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la recherche du médecin: {}", e.getMessage(), e);
         return Optional.empty();
     }
 }
 
 /**
- * Retourne tous les médecins.
+ * Retourne tous les médecins depuis la base de données.
  */
 public java.util.Collection<Medecin> getTousMedecins() {
-    return new ArrayList<>(medecins.values());
+    try {
+        List<Medecin> medecins = medecinDAO.findAll();
+        logger.debug("Récupération de {} médecins", medecins.size());
+        return medecins;
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la récupération des médecins: {}", e.getMessage(), e);
+        return new ArrayList<>();
+    }
 }
 
 /**
- * Ajoute une mutuelle.
+ * Ajoute une mutuelle en base de données.
  */
 public void ajouterMutuelle(Mutuelle mutuelle) {
     if (mutuelle == null) {
-        throw new IllegalArgumentException("Le mutuelle ne peut pas etre null");
+        throw new IllegalArgumentException("La mutuelle ne peut pas etre null");
     }
-    if (mutuelles.containsKey(mutuelle.getNom())) {
-        throw new IllegalArgumentException("Cette mutuelle existe deja");
-    }
-    mutuelles.put(mutuelle.getNom(), mutuelle);
-    if ("Mutuelle Générique".equals(mutuelle.getNom())) {
-        this.mutuelleGenerique = mutuelle;
-        this.tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+    logger.info("Ajout de la mutuelle: {}", mutuelle.getNom());
+
+    try {
+        if (mutuelleDAO.findByNom(mutuelle.getNom()).isPresent()) {
+            throw new IllegalArgumentException("Cette mutuelle existe deja");
+        }
+
+        mutuelleDAO.create(mutuelle);
+        logger.info("Mutuelle '{}' ajoutée avec succès en base de données", mutuelle.getNom());
+
+        if ("Mutuelle Générique".equals(mutuelle.getNom())) {
+            this.mutuelleGenerique = mutuelle;
+            this.tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+        }
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de l'ajout de la mutuelle: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de l'ajout de la mutuelle en base de données", e);
     }
 }
 
 /**
- * Met à jour une mutuelle existante.
+ * Met à jour une mutuelle existante en base de données.
  */
 public void modifierMutuelle(Mutuelle mutuelle) {
     if (mutuelle == null) {
         throw new IllegalArgumentException("La mutuelle ne peut pas etre null");
     }
-    if (!mutuelles.containsKey(mutuelle.getNom())) {
-        throw new IllegalArgumentException("Aucune mutuelle trouvee avec ce nom");
-    }
-    mutuelles.put(mutuelle.getNom(), mutuelle);
-    if (mutuelleGenerique != null && mutuelleGenerique.getNom().equals(mutuelle.getNom())) {
-        mutuelleGenerique = mutuelle;
-        tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+    logger.info("Modification de la mutuelle: {}", mutuelle.getNom());
+
+    try {
+        if (mutuelleDAO.findByNom(mutuelle.getNom()).isEmpty()) {
+            throw new IllegalArgumentException("Aucune mutuelle trouvee avec ce nom");
+        }
+
+        mutuelleDAO.update(mutuelle);
+        logger.info("Mutuelle '{}' modifiée avec succès", mutuelle.getNom());
+
+        if (mutuelleGenerique != null && mutuelleGenerique.getNom().equals(mutuelle.getNom())) {
+            mutuelleGenerique = mutuelle;
+            tauxRemboursementGenerique = mutuelle.getTauxRemboursement();
+        }
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la modification de la mutuelle: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la modification de la mutuelle en base de données", e);
     }
 }
 
@@ -228,7 +380,21 @@ public boolean supprimerMutuelle(String nom) {
     if (nom == null || nom.trim().isEmpty()) {
         throw new IllegalArgumentException("Le nom ne peut pas etre null");
     }
-    return mutuelles.remove(nom) != null;
+    logger.info("Suppression de la mutuelle: {}", nom);
+
+    try {
+        boolean deleted = mutuelleDAO.delete(nom);
+        if (deleted) {
+            logger.info("Mutuelle '{}' supprimée avec succès", nom);
+        } else {
+            logger.warn("Aucune mutuelle trouvée pour suppression: {}", nom);
+        }
+        return deleted;
+
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la suppression de la mutuelle: {}", e.getMessage(), e);
+        throw new RuntimeException("Erreur lors de la suppression de la mutuelle en base de données", e);
+    }
 }
 
 /**
@@ -238,7 +404,14 @@ public Optional<Mutuelle> rechercherMutuelle(String nom) {
     if (nom == null || nom.trim().isEmpty()) {
         return Optional.empty();
     }
-    return Optional.ofNullable(mutuelles.get(nom.trim()));
+    logger.debug("Recherche de la mutuelle: {}", nom);
+
+    try {
+        return mutuelleDAO.findByNom(nom.trim());
+    } catch (SQLException e) {
+        logger.error("Erreur lors de la recherche de la mutuelle: {}", e.getMessage(), e);
+        return Optional.empty();
+    }
 }
 
 /**
