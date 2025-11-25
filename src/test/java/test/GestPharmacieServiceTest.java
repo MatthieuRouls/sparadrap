@@ -45,7 +45,7 @@ public class GestPharmacieServiceTest {
         );
 
         mutuelle = new Mutuelle(
-                "Mutuelle Générale", "75000", "Paris", "0123456789", 70.0
+                "Mutuelle Générale", "10 Rue de la Santé", "75000", "Paris", "0123456789", "contact@mutuelle.fr", 70.0
         );
 
         medicament1 = new Medicament(

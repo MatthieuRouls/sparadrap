@@ -303,10 +303,10 @@ public String supprimerMedecin(String identifiant) {
  * @param tauxRemboursement pourcentage [0–100]
  * @return message d'issue opérationnelle
  */
-public String ajouterMutuelle(String nom, String codePostal, String ville,
-                              String telephone, double tauxRemboursement) {
+public String ajouterMutuelle(String nom, String adresse, String codePostal, String ville,
+                              String telephone, String email, double tauxRemboursement) {
     try {
-        Mutuelle mutuelle = new Mutuelle(nom, codePostal, ville, telephone, tauxRemboursement);
+        Mutuelle mutuelle = new Mutuelle(nom, adresse, codePostal, ville, telephone, email, tauxRemboursement);
         service.ajouterMutuelle(mutuelle);
         return "Mutuelle ajoutée avec succès";
     } catch (Exception e) {
@@ -715,7 +715,7 @@ private void initialiserDonneesDemo() {
                 "0123456790", "marie.dupont@hopital.fr", "12345678901");
 
         // Mutuelle de démonstration
-        ajouterMutuelle("Mutuelle Santé Plus", "75000", "Paris", "0123456800", 70.0);
+        ajouterMutuelle("Mutuelle Santé Plus", "20 Rue de la Santé", "75000", "Paris", "0123456800", "contact@mutuelle-sante.fr", 70.0);
 
     } catch (Exception e) {
         System.err.println("Erreur lors de l'initialisation des données demo : " + e.getMessage());

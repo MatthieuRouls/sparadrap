@@ -11,15 +11,17 @@ public class MutuelleTest {
 
     @BeforeEach
     public void setUp() {
-        mutuelle = new Mutuelle("Mutuelle Générale", "75000", "Paris", "0123456789", 70.0);
+        mutuelle = new Mutuelle("Mutuelle Générale", "10 Rue de la Santé", "75000", "Paris", "0123456789", "contact@mutuelle.fr", 70.0);
     }
 
     @Test
     public void testConstructeurEtGetters() {
         assertEquals("Mutuelle Générale", mutuelle.getNom());
+        assertEquals("10 Rue de la Santé", mutuelle.getAdresse());
         assertEquals("75000", mutuelle.getCodePostal());
         assertEquals("Paris", mutuelle.getVille());
         assertEquals("0123456789", mutuelle.getTelephone());
+        assertEquals("contact@mutuelle.fr", mutuelle.getEmail());
         assertEquals(70.0, mutuelle.getTauxRemboursement());
     }
 

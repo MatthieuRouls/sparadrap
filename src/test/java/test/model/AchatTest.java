@@ -31,7 +31,7 @@ public class AchatTest {
         dateTransaction = new Date();
         dateMiseEnService = new Date();
         datePeremption = new Date(dateMiseEnService.getTime() + 365L * 24 * 60 * 60 * 1000);;
-        mutuelle = new Mutuelle("Mutuelle Générale", "75000", "Paris", "0123456789", 70.0);
+        mutuelle = new Mutuelle("Mutuelle Générale", "10 Rue de la Santé", "75000", "Paris", "0123456789", "contact@mutuelle.fr", 70.0);
         client = new Client("Martin", "Pierre", "12 Rue de Paris", "75000", "Paris",
                 "0123456789", "pierre.martin@example.com", "CL001",
                 "123456789012345", mutuelle, null);
