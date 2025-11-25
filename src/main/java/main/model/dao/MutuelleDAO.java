@@ -37,7 +37,7 @@ public class MutuelleDAO {
             stmt.setString(2, mutuelle.getAdresse());
             stmt.setString(3, mutuelle.getCodePostal());
             stmt.setString(4, mutuelle.getVille());
-            stmt.setString(5, mutuelle.getNumTelephone());
+            stmt.setString(5, mutuelle.getTelephone());
             stmt.setString(6, mutuelle.getEmail());
             stmt.setDouble(7, mutuelle.getTauxRemboursement());
 
@@ -125,7 +125,7 @@ public class MutuelleDAO {
             stmt.setString(1, mutuelle.getAdresse());
             stmt.setString(2, mutuelle.getCodePostal());
             stmt.setString(3, mutuelle.getVille());
-            stmt.setString(4, mutuelle.getNumTelephone());
+            stmt.setString(4, mutuelle.getTelephone());
             stmt.setString(5, mutuelle.getEmail());
             stmt.setDouble(6, mutuelle.getTauxRemboursement());
             stmt.setString(7, mutuelle.getNom());
