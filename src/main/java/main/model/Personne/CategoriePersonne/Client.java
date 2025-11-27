@@ -11,7 +11,7 @@ public class Client extends Personne {
 
     public Client(String nom, String prenom, String adresse, String codePostal, String ville, String numTelephone, String email, String identifiant, String numeroSecuriteSocial, Mutuelle mutuelle, Medecin medecinTraitant) {
         super(nom, prenom, adresse, codePostal, ville, numTelephone, email, identifiant);
-        this.numeroSecuriteSocial = SecurityValidator.validateNumeroSecuriteSociale(numeroSecuriteSocial);
+        this.numeroSecuriteSocial = SecurityValidator.validateNumeroSecuriteSocialeOptional(numeroSecuriteSocial);
         this.mutuelle = mutuelle;
         this.medecinTraitant = medecinTraitant;
     }

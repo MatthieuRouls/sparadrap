@@ -86,6 +86,18 @@ public final class SecurityValidator {
         return cleanNumero;
     }
 
+    /**
+     * Valide un numéro de sécurité sociale optionnel (peut être null ou vide).
+     * @param numero Le numéro à valider
+     * @return Le numéro nettoyé ou null si vide/null
+     */
+    public static String validateNumeroSecuriteSocialeOptional(String numero) {
+        if (numero == null || numero.trim().isEmpty()) {
+            return null;
+        }
+        return validateNumeroSecuriteSociale(numero);
+    }
+
     public static String validateNumeroRPPS(String rpps) {
         String trimmedRPPS = validateAndTrimString(rpps, "Numero RPPS");
         String cleanRPPS = trimmedRPPS.replaceAll("\\s", "");
@@ -231,6 +243,9 @@ public final class SecurityValidator {
     // ============== SECURISATION DONNEES ===========
 
     public static String maskSecuriteSociale(String numeroComplet) {
+        if (numeroComplet == null || numeroComplet.trim().isEmpty()) {
+            return "Non renseigné";
+        }
         try {
             String cleanNumero = validateNumeroSecuriteSociale(numeroComplet);
             return cleanNumero.charAt(0) + "*".repeat(13) + cleanNumero.charAt(cleanNumero.length() - 1);
