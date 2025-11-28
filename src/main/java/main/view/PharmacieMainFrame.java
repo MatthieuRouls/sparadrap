@@ -125,6 +125,7 @@ private void setupLayout() {
     addNavigationButton("Accueil", "accueil", true);
     addNavigationButton("Clients", "clients",  false);
     addNavigationButton("Médecins", "medecins",  false);
+    addNavigationButton("Mutuelles", "mutuelles",  false);
     addNavigationButton("Médicaments", "medicaments",  false);
     addNavigationButton("Ventes", "ventes",  false);
     addNavigationButton("Statistiques", "statistiques",  false);
@@ -229,6 +230,10 @@ private void setupContentPanels() {
     // Médecins
     MedecinPanel medecinPanel = new MedecinPanel(controller);
     contentPanel.add(medecinPanel, "medecins");
+
+    // Mutuelles
+    MutuellePanel mutuellePanel = new MutuellePanel(controller);
+    contentPanel.add(mutuellePanel, "mutuelles");
 
     // Médicaments
     medicamentPanelRef = new MedicamentPanel(controller, this);

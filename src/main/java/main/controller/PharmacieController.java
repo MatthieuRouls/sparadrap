@@ -322,6 +322,30 @@ public Optional<Mutuelle> rechercherMutuelle(String nom) {
 }
 
 /**
+ * Modifie une mutuelle existante.
+ */
+public String modifierMutuelle(Mutuelle mutuelle) {
+    try {
+        service.modifierMutuelle(mutuelle);
+        return "Mutuelle modifiée avec succès";
+    } catch (Exception e) {
+        return "Erreur : " + e.getMessage();
+    }
+}
+
+/**
+ * Supprime une mutuelle par son nom.
+ */
+public String supprimerMutuelle(String nom) {
+    try {
+        service.supprimerMutuelle(nom);
+        return "Mutuelle supprimée avec succès";
+    } catch (Exception e) {
+        return "Erreur : " + e.getMessage();
+    }
+}
+
+/**
  * Liste les ordonnances émises par un médecin donné.
  */
 public java.util.List<Ordonnance> getOrdonnancesParMedecin(Medecin medecin) {
