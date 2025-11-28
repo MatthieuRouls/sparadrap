@@ -1,4 +1,0 @@
-identifiant;nom;prenom;adresse;codePostal;ville;telephone;email;numeroSecu;mutuelle
-cdurand01;Durand;Camille;12 Rue des Fleurs;75012;Paris;0601020304;camille.durand@example.com;1987654321098;Aucune
-jmartin02;Martin;Julien;5 Av. République;69002;Lyon;0611223344;julien.martin@example.com;1765432198765;Aucune
-asoumah03;Soumah;Aïcha;10 Bd Liberté;13001;Marseille;0622334455;aicha.soumah@example.com;2001122233344;Aucune
