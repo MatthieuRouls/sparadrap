@@ -16,6 +16,9 @@ public class DataEventManager {
         MEDECIN_ADDED,
         MEDECIN_UPDATED,
         MEDECIN_DELETED,
+        MUTUELLE_ADDED,
+        MUTUELLE_UPDATED,
+        MUTUELLE_DELETED,
         MEDICAMENT_ADDED,
         MEDICAMENT_UPDATED,
         MEDICAMENT_DELETED,
@@ -78,6 +81,15 @@ public class DataEventManager {
                 if (listener instanceof PharmacieMainFrame) {
                     // Actualiser le compteur de médecins quand il existera
                     ((PharmacieMainFrame) listener).refreshMedecinCount();
+                }
+                break;
+
+            case MUTUELLE_ADDED:
+            case MUTUELLE_UPDATED:
+            case MUTUELLE_DELETED:
+                if (listener instanceof PharmacieMainFrame) {
+                    // Notifier les panels qui utilisent les mutuelles (ClientPanel)
+                    ((PharmacieMainFrame) listener).refreshMutuellesList();
                 }
                 break;
 
@@ -150,6 +162,18 @@ public class DataEventManager {
                     mainListener.refreshCaCount(chiffreAffaires);
                 }
             }
+        }
+    }
+
+    public static class MutuelleEvents {
+        public static void mutuelleAdded() {
+            getInstance().fireEvent(EventType.MUTUELLE_ADDED);
+        }
+        public static void mutuelleUpdated() {
+            getInstance().fireEvent(EventType.MUTUELLE_UPDATED);
+        }
+        public static void mutuelleDeleted() {
+            getInstance().fireEvent(EventType.MUTUELLE_DELETED);
         }
     }
 }

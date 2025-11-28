@@ -570,6 +570,15 @@ private void ouvrirGestionStockAccueil() {
 
     }
 
+    /**
+     * Rafraîchit la liste des mutuelles dans le ClientPanel.
+     */
+    public void refreshMutuellesList() {
+        if (clientPanelRef != null) {
+            clientPanelRef.refreshMutuelleCombo();
+        }
+    }
+
 
 /**
  * Met à jour l'affichage du nombre de ventes du jour.

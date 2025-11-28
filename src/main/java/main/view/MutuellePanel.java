@@ -423,12 +423,18 @@ public class MutuellePanel extends JPanel {
                     mutuelle.setEmail(email);
                     mutuelle.setTauxRemboursement(taux);
                     resultat = controller.modifierMutuelle(mutuelle);
+                    if (!resultat.contains("Erreur")) {
+                        DataEventManager.MutuelleEvents.mutuelleUpdated();
+                    }
                 } else {
                     resultat = "Erreur : Mutuelle non trouvée";
                 }
             } else {
                 // Nouvelle mutuelle
                 resultat = controller.ajouterMutuelle(nom, adresse, codePostal, ville, telephone, email, taux);
+                if (!resultat.contains("Erreur")) {
+                    DataEventManager.MutuelleEvents.mutuelleAdded();
+                }
             }
 
             boolean isError = resultat.contains("Erreur");
@@ -481,6 +487,7 @@ public class MutuellePanel extends JPanel {
             if (!isError) {
                 tableModel.removeRow(selectedRow);
                 viderFormulaire();
+                DataEventManager.MutuelleEvents.mutuelleDeleted();
             }
         }
     }

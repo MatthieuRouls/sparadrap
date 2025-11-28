@@ -635,4 +635,29 @@ public class ClientPanel extends JPanel {
             ((PharmacieMainFrame) parent).showMessage(message, isError);
         }
     }
+
+    /**
+     * Rafraîchit la liste des mutuelles dans la combo box.
+     * Appelée automatiquement quand une mutuelle est ajoutée/modifiée/supprimée.
+     */
+    public void refreshMutuelleCombo() {
+        SwingUtilities.invokeLater(() -> {
+            if (mutuelleCombo != null) {
+                String currentSelection = (String) mutuelleCombo.getSelectedItem();
+                mutuelleCombo.removeAllItems();
+                mutuelleCombo.addItem("Aucune");
+                try {
+                    for (Mutuelle m : controller.getToutesMutuelles()) {
+                        mutuelleCombo.addItem(m.getNom());
+                    }
+                    // Restaurer la sélection si elle existe toujours
+                    if (currentSelection != null) {
+                        mutuelleCombo.setSelectedItem(currentSelection);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erreur lors du rafraîchissement des mutuelles: " + e.getMessage());
+                }
+            }
+        });
+    }
 }
