@@ -95,7 +95,13 @@ public final class SecurityValidator {
         if (numero == null || numero.trim().isEmpty()) {
             return null;
         }
-        return validateNumeroSecuriteSociale(numero);
+        try {
+            return validateNumeroSecuriteSociale(numero);
+        } catch (IllegalArgumentException e) {
+            // Si le format est invalide, on retourne le numéro tel quel
+            // plutôt que de crasher l'application
+            return numero.trim();
+        }
     }
 
     public static String validateNumeroRPPS(String rpps) {
