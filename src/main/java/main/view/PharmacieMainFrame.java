@@ -673,11 +673,21 @@ public void refreshCaCount(String caValue) {
         Color color = isError ? ERROR_COLOR : ACCENT_COLOR;
         String prefix = isError ? "❌ " : "✅ ";
 
-        // Afficher dans la bar de status
+        // Si c'est une erreur, afficher un pop-up
+        if (isError) {
+            JOptionPane.showMessageDialog(
+                this,
+                message,
+                "Erreur",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
+
+        // Afficher dans la barre de status (pour les deux types de messages)
         statusLabel.setText(prefix + message);
         statusLabel.setForeground(color);
 
-        // Se remet a l'etat initial après 5 secondes
+        // Se remet à l'état initial après 5 secondes
         Timer timer = new Timer(5000, e -> {
             statusLabel.setText("Prêt");
             statusLabel.setForeground(Color.GRAY);
