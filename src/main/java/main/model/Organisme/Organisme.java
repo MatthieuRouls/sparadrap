@@ -13,11 +13,11 @@ public abstract class Organisme {
 
     public Organisme(String nom, String adresse, String codePostal, String ville, String telephone, String email) {
         this.nom = SecurityValidator.validateAndTrimString(nom, "Nom de l'organisme");
-        this.adresse = SecurityValidator.validateAndTrimString(adresse, "Adresse de l'organisme");
+        this.adresse = SecurityValidator.validateAndTrimStringOptional(adresse, "Adresse de l'organisme");
         this.codePostal = SecurityValidator.validatePostalCode(codePostal);
         this.ville = SecurityValidator.validateCity(ville);
         this.telephone = SecurityValidator.validatePhoneNumber(telephone);
-        this.email = SecurityValidator.validateEmail(email);
+        this.email = SecurityValidator.validateEmailOptional(email);
     }
 
     public String getNom() {

@@ -46,6 +46,19 @@ public final class SecurityValidator {
         return trimmed;
     }
 
+    /**
+     * Valide et nettoie une chaîne optionnelle (peut être null ou vide).
+     * @param value La valeur à valider
+     * @param fieldName Le nom du champ (pour les messages d'erreur)
+     * @return La valeur nettoyée ou null si vide/null
+     */
+    public static String validateAndTrimStringOptional(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+
     public static String validateEmail(String email) {
         String trimmedEmail = validateAndTrimString(email, "Email");
         String lowerEmail = trimmedEmail.toLowerCase();
@@ -54,6 +67,18 @@ public final class SecurityValidator {
             throw new IllegalArgumentException("Format d'email invalide : " + email);
         }
         return lowerEmail;
+    }
+
+    /**
+     * Valide un email optionnel (peut être null ou vide).
+     * @param email L'email à valider
+     * @return L'email nettoyé ou null si vide/null
+     */
+    public static String validateEmailOptional(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        return validateEmail(email);
     }
 
     public static String validatePhoneNumber(String phone) {
