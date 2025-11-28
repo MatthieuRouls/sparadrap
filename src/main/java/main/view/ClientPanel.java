@@ -101,10 +101,16 @@ public class ClientPanel extends JPanel {
         mutuelleCombo = new JComboBox<>();
         mutuelleCombo.addItem("Aucune");
         try {
-            for (Mutuelle m : controller.getToutesMutuelles()) {
+            java.util.Collection<Mutuelle> mutuelles = controller.getToutesMutuelles();
+            System.out.println("Nombre de mutuelles chargées: " + mutuelles.size());
+            for (Mutuelle m : mutuelles) {
+                System.out.println("Ajout de la mutuelle: " + m.getNom());
                 mutuelleCombo.addItem(m.getNom());
             }
-        } catch (Exception ignore) {}
+        } catch (Exception e) {
+            System.err.println("ERREUR lors du chargement des mutuelles: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         // Combo médecins (médecin traitant)
         medecinCombo = new JComboBox<>();
@@ -647,7 +653,10 @@ public class ClientPanel extends JPanel {
                 mutuelleCombo.removeAllItems();
                 mutuelleCombo.addItem("Aucune");
                 try {
-                    for (Mutuelle m : controller.getToutesMutuelles()) {
+                    java.util.Collection<Mutuelle> mutuelles = controller.getToutesMutuelles();
+                    System.out.println("Rafraîchissement: " + mutuelles.size() + " mutuelles trouvées");
+                    for (Mutuelle m : mutuelles) {
+                        System.out.println("Ajout de la mutuelle: " + m.getNom());
                         mutuelleCombo.addItem(m.getNom());
                     }
                     // Restaurer la sélection si elle existe toujours
@@ -656,6 +665,7 @@ public class ClientPanel extends JPanel {
                     }
                 } catch (Exception e) {
                     System.err.println("Erreur lors du rafraîchissement des mutuelles: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         });
